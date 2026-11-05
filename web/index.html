@@ -1,0 +1,553 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ceramic Intelligence Loop</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  /* Layout: a full-width 3D line viewer at the top with a station picker, then product tiers, coverage table, a savings calculator and the pilot plan, all on a 1120px column. */
+  :root {
+    --bg: #faf7f3; --bg-2: #f0e9e1; --fg: #221b17; --fg-2: #6b5f57; --line: #ddd2c7;
+    --clay: #c8582a; --kiln: #e9a23b; --teal: #1d7484; --moss: #5f8a46; --alert: #b42318;
+    --card: #ffffff; --shadow: 0 10px 30px rgba(60, 35, 20, .08);
+    --display: "Fraunces", "Iowan Old Style", Georgia, serif;
+    --body: "Public Sans", "Segoe UI", system-ui, sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+    --scene-bg: #ece4da; --scene-floor: #d9cfc3;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #17120f; --bg-2: #211a16; --fg: #f1e9e1; --fg-2: #b3a497; --line: #3a2f29;
+      --clay: #e8773f; --kiln: #f0b24f; --teal: #4fb3c4; --moss: #8fbf6a; --alert: #f08a7e;
+      --card: #231c18; --shadow: 0 10px 30px rgba(0, 0, 0, .35);
+      --scene-bg: #1c1613; --scene-floor: #2a221d; color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #17120f; --bg-2: #211a16; --fg: #f1e9e1; --fg-2: #b3a497; --line: #3a2f29;
+    --clay: #e8773f; --kiln: #f0b24f; --teal: #4fb3c4; --moss: #8fbf6a; --alert: #f08a7e;
+    --card: #231c18; --shadow: 0 10px 30px rgba(0, 0, 0, .35);
+    --scene-bg: #1c1613; --scene-floor: #2a221d; color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 16px; line-height: 1.55; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0; }
+  h1, h2, h3 { font-family: var(--display); font-weight: 700; line-height: 1.1; text-wrap: balance; margin: 0; }
+  h1 { font-size: clamp(2.2rem, 5vw, 3.6rem); letter-spacing: -.01em; }
+  h2 { font-size: clamp(1.6rem, 3vw, 2.2rem); margin-bottom: .6rem; }
+  h3 { font-size: 1.2rem; }
+  p { margin: 0 0 .9rem; max-width: 68ch; }
+  .eyebrow { font-family: var(--mono); font-size: .75rem; letter-spacing: .12em; text-transform: uppercase; color: var(--clay); }
+  .muted { color: var(--fg-2); }
+  header.top { padding-block: 2.2rem 1.2rem; display: grid; gap: .6rem; }
+  header.top p.lede { font-size: 1.15rem; max-width: 60ch; }
+  section { padding-block: 2.4rem; }
+  section + section { border-top: 1px solid var(--line); }
+
+  /* viewer */
+  .viewer { position: relative; background: var(--scene-bg); border-radius: 14px; overflow: hidden; box-shadow: var(--shadow); }
+  .viewer canvas { display: block; width: 100%; height: 100%; }
+  .stage { aspect-ratio: 16 / 9; max-height: 72vh; max-width: 100%; }
+  @media (max-width: 700px) { .stage { aspect-ratio: 4 / 3; } }
+  .picker { display: flex; flex-wrap: wrap; gap: .5rem; margin: 1rem 0 .8rem; }
+  .picker button { font: 500 .9rem var(--body); color: var(--fg); background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: .45rem .95rem; cursor: pointer; }
+  .picker button[aria-pressed="true"] { background: var(--clay); border-color: var(--clay); color: #fff; }
+  .picker button:focus-visible, .tier a:focus-visible, input:focus-visible { outline: 3px solid var(--teal); outline-offset: 2px; }
+  .panel { position: absolute; right: 14px; top: 14px; width: min(330px, 46%); background: var(--card); color: var(--fg); border-radius: 12px; padding: 1rem 1.1rem; box-shadow: var(--shadow); border: 1px solid var(--line); min-width: 0; }
+  .panel h3 { margin-bottom: .3rem; }
+  .panel p { font-size: .9rem; margin-bottom: .5rem; }
+  .panel ul { margin: 0; padding-left: 1.1rem; font-size: .86rem; }
+  .panel li { margin-bottom: .2rem; }
+  .hud { position: absolute; left: 14px; bottom: 12px; display: flex; gap: .9rem; font-family: var(--mono); font-size: .74rem; color: var(--fg); background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: .4rem .7rem; flex-wrap: wrap; }
+  .hud b { font-weight: 500; color: var(--clay); }
+  .hint { position: absolute; right: 14px; bottom: 12px; font-family: var(--mono); font-size: .72rem; color: var(--fg-2); background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: .35rem .6rem; }
+  @media (max-width: 700px) {
+    .panel { position: static; width: auto; border-radius: 0 0 14px 14px; border-top: 1px solid var(--line); }
+    .hint { display: none; }
+    .hud { bottom: auto; top: 10px; left: 10px; }
+  }
+  .legend { display: flex; flex-wrap: wrap; gap: 1rem; font-size: .85rem; color: var(--fg-2); margin-top: .7rem; }
+  .legend span::before { content: ""; display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: .4rem; vertical-align: -1px; background: var(--sw); }
+
+  /* tiers */
+  .tiers { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; margin-top: 1.2rem; }
+  .tier { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 1.2rem 1.2rem 1rem; display: flex; flex-direction: column; gap: .6rem; min-width: 0; }
+  .tier .n { font-family: var(--mono); font-size: .75rem; color: var(--fg-2); letter-spacing: .1em; }
+  .tier h3 { font-size: 1.35rem; }
+  .tier .where { font-size: .85rem; color: var(--teal); font-weight: 600; }
+  .tier ul { margin: 0; padding-left: 1.1rem; font-size: .9rem; }
+  .tier li { margin-bottom: .25rem; }
+  .tier .price { margin-top: auto; padding-top: .6rem; border-top: 1px dashed var(--line); font-family: var(--mono); font-size: .8rem; color: var(--fg-2); }
+  .tier .price b { color: var(--fg); font-weight: 500; }
+
+  /* table */
+  .tablewrap { overflow-x: auto; margin-top: 1rem; }
+  table { border-collapse: collapse; width: 100%; min-width: 640px; font-size: .92rem; }
+  th, td { text-align: left; padding: .6rem .7rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-family: var(--mono); font-size: .74rem; letter-spacing: .08em; text-transform: uppercase; color: var(--fg-2); font-weight: 500; }
+  .pill { display: inline-block; font-family: var(--mono); font-size: .72rem; padding: .15rem .5rem; border-radius: 999px; color: #fff; }
+  .pill.high { background: var(--moss); } .pill.med { background: var(--kiln); color: #221b17; } .pill.low { background: var(--alert); }
+
+  /* calculator */
+  .calc { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; margin-top: 1.2rem; }
+  @media (max-width: 760px) { .calc { grid-template-columns: 1fr; } }
+  .calc form { display: grid; gap: .7rem; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 1.1rem; min-width: 0; }
+  .calc label { display: grid; gap: .2rem; font-size: .86rem; color: var(--fg-2); }
+  .calc input { font: 500 1rem var(--mono); color: var(--fg); background: var(--bg-2); border: 1px solid var(--line); border-radius: 8px; padding: .5rem .6rem; width: 100%; }
+  .results { display: grid; grid-template-columns: 1fr 1fr; gap: .8rem; align-content: start; }
+  .stat { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: .9rem 1rem; min-width: 0; }
+  .stat .v { font-family: var(--display); font-size: clamp(1.5rem, 3vw, 2.1rem); font-weight: 700; color: var(--clay); font-variant-numeric: tabular-nums; }
+  .stat .l { font-size: .8rem; color: var(--fg-2); }
+  .stat.total { grid-column: 1 / -1; }
+  .stat.total .v { color: var(--moss); }
+
+  /* plan */
+  .plan { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-top: 1rem; counter-reset: ph; }
+  .phase { padding: 1rem; border-radius: 12px; background: var(--bg-2); min-width: 0; }
+  .phase .m { font-family: var(--mono); font-size: .75rem; color: var(--clay); letter-spacing: .08em; }
+  .phase h3 { margin: .2rem 0 .4rem; font-size: 1.1rem; }
+  .phase p { font-size: .9rem; margin: 0; }
+  footer { padding-block: 2rem 3rem; color: var(--fg-2); font-size: .85rem; border-top: 1px solid var(--line); }
+  @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto; } }
+</style>
+</head>
+<body>
+
+
+<div class="wrap">
+  <header class="top">
+    <span class="eyebrow">Ceramic 4.0 for Bangladeshi tile lines</span>
+    <h1>Ceramic Intelligence Loop</h1>
+    <p class="lede">Two inspection stations and one brain, retrofitted onto any tile line. Reject broken tiles before the kiln, grade every fired tile by camera and laser, and trace each defect back to the machine that caused it.</p>
+  </header>
+
+  <section id="line">
+    <span class="eyebrow">Interactive 3D model</span>
+    <h2>Walk the line</h2>
+    <p class="muted">Drag to orbit, scroll or pinch to zoom. Pick a station to fly to it. Tiles leave the press green, pass the green-stage node, the dryer, the glaze line and the kiln, then the fired-stage node. Red-marked tiles are defects; watch where each one gets caught.</p>
+    <div class="picker" id="picker" role="group" aria-label="Stations"></div>
+    <div class="viewer">
+      <div class="stage" id="stage"></div>
+      <div class="hud" id="hud"><span>inspected <b id="h-in">0</b></span><span>green rejects <b id="h-g">0</b></span><span>fired rejects <b id="h-f">0</b></span><span>gas saved <b id="h-gas">0 m³</b></span></div>
+      <div class="hint">drag · scroll · pick a station</div>
+      <aside class="panel" id="panel"></aside>
+    </div>
+    <div class="legend">
+      <span style="--sw:#d9c4a3">Green body</span>
+      <span style="--sw:#e7e2d8">Fired tile</span>
+      <span style="--sw:#c8582a">Inspection node</span>
+      <span style="--sw:#b42318">Defect detected</span>
+      <span style="--sw:#1d7484">Data to cloud</span>
+      <span style="--sw:#5f8a46">Set-point back to machine</span>
+    </div>
+  </section>
+
+  <section id="make">
+    <span class="eyebrow">What we can build</span>
+    <h2>Four products, one platform</h2>
+    <p class="muted">Each tier works on its own and plugs into the next. A factory can start with the green node alone and add the rest as the savings land.</p>
+    <div class="tiers">
+      <article class="tier">
+        <span class="n">TIER 1</span>
+        <h3>Green Node</h3>
+        <span class="where">Press exit and dryer exit</span>
+        <ul>
+          <li>Line-scan camera with low-angle grazing light for chips, cracks and lumps</li>
+          <li>3D laser profiler: thickness map, die-fill variation, ±50 µm</li>
+          <li>Load cell + 3D volume = bulk density of every tile</li>
+          <li>Thermal camera at the dryer exit for internal laminations</li>
+          <li>Pneumatic rejector; green scrap goes straight back to the mill</li>
+          <li>Edge GPU, under 20 ms per tile, encoder-synchronised</li>
+        </ul>
+        <div class="price">Target: 60–70% of structural rejects stopped before firing<br><b>Indicative BDT 25–35 lakh</b> per station</div>
+      </article>
+      <article class="tier">
+        <span class="n">TIER 2</span>
+        <h3>Fired Node</h3>
+        <span class="where">Kiln exit, before sorting</span>
+        <ul>
+          <li>Multi-camera array with polarised lighting</li>
+          <li>Surface model (YOLOv8/v10 family) trained on your own designs, so marble veins are not called defects</li>
+          <li>Classes: cracks, pinholes, chips, spots, glaze faults, print errors, shade</li>
+          <li>3D flatness: centre curvature, edge curvature, warpage, wedging, calibre per ISO 10545-2</li>
+          <li>Grade A / B / reject signal to the existing sorter</li>
+        </ul>
+        <div class="price">Target: mAP ≥ 0.90, consistent across three shifts<br><b>Indicative BDT 25–40 lakh</b> per station</div>
+      </article>
+      <article class="tier">
+        <span class="n">TIER 3</span>
+        <h3>The Loop</h3>
+        <span class="where">Root-cause engine and machine feedback</span>
+        <ul>
+          <li>Reads press pressure, dryer temperatures, glaze density and kiln-zone curves (PLC tags, OPC-UA or logs)</li>
+          <li>Correlates defect bursts with upstream telemetry by time and position</li>
+          <li>Phase 1: recommended set-points shown to the operator with the evidence</li>
+          <li>Phase 2: OPC-UA write-back with an audit log, where the plant and machine vendor agree</li>
+        </ul>
+        <div class="price">Turns detection into prevention<br><b>Software subscription</b> per line</div>
+      </article>
+      <article class="tier">
+        <span class="n">TIER 4</span>
+        <h3>Factory OS</h3>
+        <span class="where">Cloud dashboard for the whole plant</span>
+        <ul>
+          <li>Live defect rate, grade split and OEE per line, on any phone</li>
+          <li>Shift and daily reports generated automatically, Bangla and English</li>
+          <li>Defect bursts open tasks for the right technician; closure tracked</li>
+          <li>Every tile becomes a labelled record: an R&D database for bodies, glazes, suppliers and kiln curves</li>
+          <li>Data stays on the factory's own servers</li>
+        </ul>
+        <div class="price">Replaces paper logbooks and end-of-shift spreadsheets<br><b>Subscription</b> per plant</div>
+      </article>
+    </div>
+  </section>
+
+  <section id="coverage">
+    <span class="eyebrow">Can green-body defects really be seen?</span>
+    <h2>Coverage map, stated honestly</h2>
+    <p class="muted">What each sensor catches before the kiln, and what only the fired node can catch. Confidence reflects published results and our own tests, not sales optimism.</p>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Defect</th><th>Stage it forms</th><th>Caught by</th><th>Sensor</th><th>Confidence</th></tr></thead>
+        <tbody>
+          <tr><td>Edge chips, corner breaks</td><td>Press, handling</td><td>Green node</td><td>Line-scan + grazing light</td><td><span class="pill high">High</span></td></tr>
+          <tr><td>Surface and drying cracks ≥ 0.2 mm</td><td>Press, dryer</td><td>Green node</td><td>Line-scan + grazing light</td><td><span class="pill high">High</span></td></tr>
+          <tr><td>Thickness variation, uneven die fill</td><td>Press</td><td>Green node</td><td>3D laser profiler</td><td><span class="pill high">High</span></td></tr>
+          <tr><td>Density variation</td><td>Press</td><td>Green node</td><td>Load cell + 3D volume</td><td><span class="pill high">High</span></td></tr>
+          <tr><td>Powder lumps, contamination, die marks</td><td>Press</td><td>Green node</td><td>2D vision</td><td><span class="pill high">High</span></td></tr>
+          <tr><td>Print misregistration, glaze drips, missing glaze</td><td>Glaze line</td><td>Green node (after glaze)</td><td>2D vision</td><td><span class="pill high">High</span></td></tr>
+          <tr><td>Internal lamination</td><td>Press (de-airing)</td><td>Green node</td><td>Thermal camera after dryer, tap-test acoustics</td><td><span class="pill med">Medium</span></td></tr>
+          <tr><td>Pinholes</td><td>Glaze, firing</td><td>Both</td><td>2D vision, wet and fired</td><td><span class="pill med">Medium</span></td></tr>
+          <tr><td>Black core, over/under-firing</td><td>Kiln</td><td>Fired node</td><td>Cameras + kiln telemetry</td><td><span class="pill high">High</span></td></tr>
+          <tr><td>Warpage, calibre drift, wedging</td><td>Kiln, press</td><td>Fired node</td><td>3D laser profiler</td><td><span class="pill high">High</span></td></tr>
+          <tr><td>Shade variation, crazing, roller marks</td><td>Kiln</td><td>Fired node</td><td>Multi-camera array</td><td><span class="pill high">High</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="savings">
+    <span class="eyebrow">Savings calculator</span>
+    <h2>What pre-kiln rejection is worth to a plant</h2>
+    <p class="muted">Defaults describe a 35,000 m²/day plant on 600×600 tiles. Change any number to match your own line. The material line is usually larger than the gas line; the gas line is the national energy argument.</p>
+    <div class="calc">
+      <form id="calc">
+        <label>Output, m² per day <input id="c-out" type="number" value="35000" min="100" step="500"></label>
+        <label>Tile area, m² (600×600 = 0.36) <input id="c-area" type="number" value="0.36" min="0.01" step="0.01"></label>
+        <label>Kiln gas per tile, m³ <input id="c-gas" type="number" value="0.38" min="0.01" step="0.01"></label>
+        <label>Gas price, BDT per m³ <input id="c-price" type="number" value="30" min="1" step="1"></label>
+        <label>Body + glaze material, BDT per m² <input id="c-mat" type="number" value="150" min="1" step="10"></label>
+        <label>Share of output caught before the kiln, % <input id="c-pct" type="number" value="1" min="0.1" max="10" step="0.1"></label>
+        <label>Production days per year <input id="c-days" type="number" value="330" min="1" max="365" step="1"></label>
+      </form>
+      <div class="results">
+        <div class="stat"><div class="v" id="r-tiles">—</div><div class="l">tiles per day diverted before firing</div></div>
+        <div class="stat"><div class="v" id="r-gasm3">—</div><div class="l">m³ of gas not burned per day</div></div>
+        <div class="stat"><div class="v" id="r-gas">—</div><div class="l">BDT per year in kiln gas</div></div>
+        <div class="stat"><div class="v" id="r-mat">—</div><div class="l">BDT per year in recovered material</div></div>
+        <div class="stat total"><div class="v" id="r-total">—</div><div class="l">BDT per year, before labour, disposal and downtime savings. Illustrative; calibrate with your plant's audit.</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="plan">
+    <span class="eyebrow">Pilot plan</span>
+    <h2>Twenty-four months on one line</h2>
+    <div class="plan">
+      <div class="phase"><span class="m">MONTHS 1–6</span><h3>Install the green node</h3><p>Encoder sync, enclosures, live data collection. Baseline scrap and gas audit with the plant.</p></div>
+      <div class="phase"><span class="m">MONTHS 7–12</span><h3>Green model live</h3><p>Advisory rejection, then automatic diversion at the press exit. First published results.</p></div>
+      <div class="phase"><span class="m">MONTHS 13–18</span><h3>Fired node and dashboard</h3><p>Surface AI and 3D flatness at the kiln exit. Dashboard and automatic shift reports in daily use.</p></div>
+      <div class="phase"><span class="m">MONTHS 19–24</span><h3>Root cause and handover</h3><p>Correlation engine on telemetry, operator-confirmed set-points, OPC-UA interface demonstrated.</p></div>
+    </div>
+  </section>
+
+  <footer>
+    Ceramic Intelligence Loop. Research proposed under the UGC Higher Education Acceleration and Transformation project, Academic Transformation Fund, Window 3a (STEM). Prices and savings on this page are indicative and will be replaced by audited figures from the pilot plant.
+  </footer>
+</div>
+
+<script type="importmap">
+{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/" } }
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const css = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// ---------- scene
+const stage = document.getElementById('stage');
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+stage.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(42, 16 / 9, 0.1, 400);
+camera.position.set(4, 12, 30);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true; controls.dampingFactor = 0.08; controls.maxPolarAngle = Math.PI * 0.49; controls.minDistance = 3; controls.maxDistance = 90;
+controls.target.set(4, 1.5, 0);
+
+const hemi = new THREE.HemisphereLight(0xffffff, 0x8a7a6a, 0.9); scene.add(hemi);
+const sun = new THREE.DirectionalLight(0xfff2e0, 1.4); sun.position.set(-18, 30, 18); sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048); sun.shadow.camera.left = -40; sun.shadow.camera.right = 40; sun.shadow.camera.top = 30; sun.shadow.camera.bottom = -30; sun.shadow.camera.far = 100;
+scene.add(sun);
+
+const floorMat = new THREE.MeshStandardMaterial({ color: 0xd9cfc3, roughness: 1 });
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(120, 60), floorMat); floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; scene.add(floor);
+const grid = new THREE.GridHelper(120, 60, 0xb8ab9c, 0xcdc2b5); grid.position.y = 0.01; grid.material.opacity = 0.35; grid.material.transparent = true; scene.add(grid);
+
+function applyTheme() {
+  scene.background = new THREE.Color(css('--scene-bg'));
+  floorMat.color.set(css('--scene-floor'));
+}
+applyTheme();
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme);
+new MutationObserver(applyTheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+// ---------- materials
+const M = {
+  steel: new THREE.MeshStandardMaterial({ color: 0x8f949a, metalness: 0.6, roughness: 0.4 }),
+  dark: new THREE.MeshStandardMaterial({ color: 0x3a3a3c, metalness: 0.3, roughness: 0.7 }),
+  machine: new THREE.MeshStandardMaterial({ color: 0x5a6470, roughness: 0.6 }),
+  belt: new THREE.MeshStandardMaterial({ color: 0x2b2b2e, roughness: 0.9 }),
+  node: new THREE.MeshStandardMaterial({ color: 0xc8582a, roughness: 0.5 }),
+  nodeDark: new THREE.MeshStandardMaterial({ color: 0x8b3a1c, roughness: 0.5 }),
+  glass: new THREE.MeshStandardMaterial({ color: 0x9fd3e6, transparent: true, opacity: 0.35, roughness: 0.1 }),
+  kiln: new THREE.MeshStandardMaterial({ color: 0x9c6d4a, roughness: 0.8 }),
+  kilnGlow: new THREE.MeshStandardMaterial({ color: 0xff7a1f, emissive: 0xff5a00, emissiveIntensity: 1.2 }),
+  dryer: new THREE.MeshStandardMaterial({ color: 0xb9b1a6, roughness: 0.7 }),
+  green: new THREE.MeshStandardMaterial({ color: 0xd9c4a3, roughness: 1 }),
+  defect: new THREE.MeshStandardMaterial({ color: 0xb42318, emissive: 0x7a0f0f, emissiveIntensity: 0.6, roughness: 1 }),
+  teal: new THREE.MeshStandardMaterial({ color: 0x1d7484, roughness: 0.4 }),
+  moss: new THREE.MeshStandardMaterial({ color: 0x5f8a46, roughness: 0.5 }),
+  laser: new THREE.MeshBasicMaterial({ color: 0xff2a2a, transparent: true, opacity: 0.55, side: THREE.DoubleSide }),
+  light: new THREE.MeshStandardMaterial({ color: 0xfff6d8, emissive: 0xfff0c0, emissiveIntensity: 0.9 }),
+  bin: new THREE.MeshStandardMaterial({ color: 0x6b5f57, roughness: 0.9 }),
+};
+const firedMats = [0xe7e2d8, 0xcfc6b8, 0xb9a79a, 0xf2efe9, 0x8c7f76].map(c => new THREE.MeshStandardMaterial({ color: c, roughness: 0.25, metalness: 0.05 }));
+
+const box = (w, h, d, mat, x, y, z, parent = scene) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.position.set(x, y, z); m.castShadow = true; m.receiveShadow = true; parent.add(m); return m; };
+const cyl = (r, h, mat, x, y, z, parent = scene, rotZ = 0) => { const m = new THREE.Mesh(new THREE.CylinderGeometry(r, r, h, 20), mat); m.position.set(x, y, z); m.rotation.z = rotZ; m.castShadow = true; parent.add(m); return m; };
+
+// ---------- conveyor
+const BELT_Y = 1.1, X0 = -16, X1 = 27;
+box(X1 - X0, 0.18, 1.9, M.belt, (X0 + X1) / 2, BELT_Y, 0);
+for (let x = X0; x <= X1; x += 1.5) { box(0.12, 0.9, 0.12, M.steel, x, 0.55, 0.85); box(0.12, 0.9, 0.12, M.steel, x, 0.55, -0.85); }
+box(X1 - X0, 0.08, 0.1, M.steel, (X0 + X1) / 2, BELT_Y + 0.1, 1.0); box(X1 - X0, 0.08, 0.1, M.steel, (X0 + X1) / 2, BELT_Y + 0.1, -1.0);
+
+// ---------- press
+const press = new THREE.Group(); press.position.set(-18.5, 0, 0); scene.add(press);
+box(3.2, 1.2, 3.2, M.machine, 0, 0.6, 0, press);
+box(0.5, 4.5, 0.5, M.steel, -1.2, 3.0, -1.2, press); box(0.5, 4.5, 0.5, M.steel, 1.2, 3.0, -1.2, press); box(0.5, 4.5, 0.5, M.steel, -1.2, 3.0, 1.2, press); box(0.5, 4.5, 0.5, M.steel, 1.2, 3.0, 1.2, press);
+box(3.4, 1.0, 3.4, M.machine, 0, 5.6, 0, press);
+const ram = box(1.6, 1.6, 1.6, M.dark, 0, 3.4, 0, press);
+cyl(0.35, 1.4, M.steel, 0, 4.7, 0, press);
+
+// ---------- inspection node builder
+function makeNode(x, kind) {
+  const g = new THREE.Group(); g.position.set(x, 0, 0); scene.add(g);
+  box(0.25, 4.6, 0.25, M.nodeDark, -1.1, 2.3, 1.5, g); box(0.25, 4.6, 0.25, M.nodeDark, 1.1, 2.3, 1.5, g);
+  box(0.25, 4.6, 0.25, M.nodeDark, -1.1, 2.3, -1.5, g); box(0.25, 4.6, 0.25, M.nodeDark, 1.1, 2.3, -1.5, g);
+  box(2.6, 0.3, 3.4, M.node, 0, 4.6, 0, g);
+  box(2.8, 0.9, 0.6, M.node, 0, 4.2, 0, g); // housing
+  if (kind === 'green') {
+    // line-scan camera + grazing light bars + laser profiler + load cell
+    box(0.5, 0.5, 0.5, M.dark, -0.4, 3.6, 0, g); cyl(0.16, 0.5, M.dark, -0.4, 3.2, 0, g);
+    box(2.2, 0.12, 0.12, M.light, 0, 2.2, 1.1, g); box(2.2, 0.12, 0.12, M.light, 0, 2.2, -1.1, g);
+    box(0.5, 0.35, 0.8, M.teal, 0.6, 3.6, 0, g);
+    const sheet = new THREE.Mesh(new THREE.PlaneGeometry(0.05, 2.3), M.laser); sheet.rotation.y = Math.PI / 2; sheet.position.set(0.6, 2.4, 0); g.add(sheet);
+    const fan = new THREE.Mesh(new THREE.PlaneGeometry(2.0, 2.2), M.laser); fan.rotation.y = Math.PI / 2; fan.position.set(0.6, 2.3, 0); fan.scale.set(1, 1, 1); g.add(fan);
+    box(1.4, 0.1, 1.9, M.teal, 0, BELT_Y + 0.1, 0, g); // load cell plate
+    box(0.9, 0.5, 0.7, M.dark, 0, 3.6, -1.0, g); // thermal cam
+  } else {
+    [-0.7, 0, 0.7].forEach(dx => { box(0.45, 0.45, 0.45, M.dark, dx, 3.6, 0.4, g); cyl(0.14, 0.4, M.dark, dx, 3.25, 0.4, g); });
+    box(2.4, 0.12, 0.12, M.light, 0, 2.6, 1.2, g); box(2.4, 0.12, 0.12, M.light, 0, 2.6, -1.2, g);
+    box(0.5, 0.35, 0.8, M.teal, 0, 3.6, -0.6, g);
+    const fan = new THREE.Mesh(new THREE.PlaneGeometry(2.0, 2.2), M.laser); fan.rotation.y = Math.PI / 2; fan.position.set(0, 2.3, -0.6); g.add(fan);
+  }
+  // edge GPU cabinet
+  box(0.7, 1.4, 0.9, M.dark, 1.8, 0.7, -1.9, g); box(0.5, 0.05, 0.6, M.teal, 1.8, 1.0, -1.44, g);
+  // rejector + bin
+  const pusher = cyl(0.12, 1.4, M.steel, 0, BELT_Y + 0.35, -1.9, g, Math.PI / 2); pusher.rotation.set(Math.PI / 2, 0, 0);
+  box(0.9, 0.5, 0.9, M.machine, 0, BELT_Y + 0.35, -2.6, g);
+  box(2.2, 0.9, 1.4, M.bin, 0, 0.45, 2.4, g);
+  g.userData.pusher = pusher;
+  return g;
+}
+const greenNode = makeNode(-12, 'green');
+const firedNode = makeNode(19.5, 'fired');
+
+// ---------- dryer
+const dryer = new THREE.Group(); dryer.position.set(-6.5, 0, 0); scene.add(dryer);
+box(6, 2.6, 3.2, M.dryer, 0, BELT_Y + 1.2, 0, dryer);
+[-2, 0, 2].forEach(dx => { cyl(0.25, 1.2, M.steel, dx, BELT_Y + 3.0, 0, dryer); });
+box(6.2, 0.2, 3.4, M.steel, 0, BELT_Y + 2.6, 0, dryer);
+
+// ---------- glaze & digital print
+const glaze = new THREE.Group(); glaze.position.set(0.5, 0, 0); scene.add(glaze);
+box(2.4, 0.3, 2.6, M.machine, 0, 3.4, 0, glaze); box(0.2, 2.2, 0.2, M.steel, -1.0, 2.3, 1.2, glaze); box(0.2, 2.2, 0.2, M.steel, 1.0, 2.3, 1.2, glaze); box(0.2, 2.2, 0.2, M.steel, -1.0, 2.3, -1.2, glaze); box(0.2, 2.2, 0.2, M.steel, 1.0, 2.3, -1.2, glaze);
+box(1.8, 0.6, 2.0, M.teal, 0, 2.9, 0, glaze);
+const printer = new THREE.Group(); printer.position.set(4.2, 0, 0); scene.add(printer);
+box(2.6, 1.0, 2.6, M.machine, 0, 3.0, 0, printer); box(2.6, 0.2, 0.3, M.steel, 0, 2.2, 1.2, printer); box(2.6, 0.2, 0.3, M.steel, 0, 2.2, -1.2, printer);
+box(0.2, 1.4, 0.2, M.steel, -1.1, 2.0, 1.2, printer); box(0.2, 1.4, 0.2, M.steel, 1.1, 2.0, 1.2, printer); box(0.2, 1.4, 0.2, M.steel, -1.1, 2.0, -1.2, printer); box(0.2, 1.4, 0.2, M.steel, 1.1, 2.0, -1.2, printer);
+
+// ---------- kiln
+const kiln = new THREE.Group(); kiln.position.set(11.5, 0, 0); scene.add(kiln);
+box(9, 2.8, 3.6, M.kiln, 0, BELT_Y + 1.3, 0, kiln);
+box(9.2, 0.25, 3.8, M.dark, 0, BELT_Y + 2.8, 0, kiln);
+box(0.4, 1.4, 2.4, M.kilnGlow, -4.55, BELT_Y + 0.9, 0, kiln); box(0.4, 1.4, 2.4, M.kilnGlow, 4.55, BELT_Y + 0.9, 0, kiln);
+for (let i = 0; i < 4; i++) { cyl(0.22, 2.0, M.dark, -3 + i * 2, BELT_Y + 3.9, 0.9, kiln); }
+cyl(0.5, 3.5, M.steel, 3.2, BELT_Y + 4.6, -0.9, kiln);
+const burners = []; for (let i = 0; i < 5; i++) { const b = box(0.3, 0.3, 0.3, M.kilnGlow, -3.6 + i * 1.8, BELT_Y + 2.0, 1.85, kiln); burners.push(b); }
+
+// ---------- sorter / stacker
+const sorter = new THREE.Group(); sorter.position.set(25, 0, 0); scene.add(sorter);
+box(2.5, 0.3, 2.5, M.machine, 0, 3.4, 0, sorter); box(0.2, 3.4, 0.2, M.steel, -1.1, 1.7, 1.1, sorter); box(0.2, 3.4, 0.2, M.steel, 1.1, 1.7, 1.1, sorter); box(0.2, 3.4, 0.2, M.steel, -1.1, 1.7, -1.1, sorter); box(0.2, 3.4, 0.2, M.steel, 1.1, 1.7, -1.1, sorter);
+for (let i = 0; i < 3; i++) { box(1.3, 0.12, 1.3, M.bin, 0, 0.1 + i * 0.5, 2.6, sorter); for (let k = 0; k < 6; k++) box(1.2, 0.06, 1.2, firedMats[k % firedMats.length], 0, 0.2 + i * 0.5 + k * 0.065, 2.6, sorter); }
+
+// ---------- cloud dashboard
+const dashCanvas = document.createElement('canvas'); dashCanvas.width = 1024; dashCanvas.height = 512;
+const dctx = dashCanvas.getContext('2d');
+const dashTex = new THREE.CanvasTexture(dashCanvas); dashTex.colorSpace = THREE.SRGBColorSpace;
+const dash = new THREE.Mesh(new THREE.PlaneGeometry(10, 5), new THREE.MeshBasicMaterial({ map: dashTex }));
+dash.position.set(3.5, 9.5, -6); dash.rotation.x = -0.25; scene.add(dash);
+box(10.3, 5.3, 0.15, M.dark, 3.5, 9.5, -6.12);
+box(0.25, 7, 0.25, M.steel, -1.2, 3.6, -6.2); box(0.25, 7, 0.25, M.steel, 8.2, 3.6, -6.2);
+
+function makeLine(points, color, dashed) {
+  const geo = new THREE.BufferGeometry().setFromPoints(points.map(p => new THREE.Vector3(...p)));
+  const mat = dashed ? new THREE.LineDashedMaterial({ color, dashSize: 0.5, gapSize: 0.3 }) : new THREE.LineBasicMaterial({ color });
+  const l = new THREE.Line(geo, mat); if (dashed) l.computeLineDistances(); scene.add(l); return l;
+}
+makeLine([[-12, 4.8, 0], [-12, 8, -3], [-1, 9.5, -5.9]], 0x1d7484, false);
+makeLine([[19.5, 4.8, 0], [19.5, 8, -3], [8, 9.5, -5.9]], 0x1d7484, false);
+makeLine([[0, 9.0, -5.9], [-10, 8.5, -3.5], [-18.5, 6.2, 0]], 0x5f8a46, true);
+makeLine([[6, 9.0, -5.9], [9, 7, -3], [11.5, 4.3, 0]], 0x5f8a46, true);
+// data packets travelling along lines
+const packets = [];
+function addPacket(from, to, mat, speed) { const m = new THREE.Mesh(new THREE.SphereGeometry(0.16, 10, 10), mat); scene.add(m); packets.push({ m, from: new THREE.Vector3(...from), to: new THREE.Vector3(...to), t: Math.random(), speed }); }
+addPacket([-12, 4.8, 0], [-1, 9.5, -5.9], M.teal, 0.25); addPacket([19.5, 4.8, 0], [8, 9.5, -5.9], M.teal, 0.25);
+addPacket([0, 9.0, -5.9], [-18.5, 6.2, 0], M.moss, 0.12); addPacket([6, 9.0, -5.9], [11.5, 4.3, 0], M.moss, 0.12);
+
+// ---------- labels (sprites)
+function label(text, x, y, z, scale = 1) {
+  const c = document.createElement('canvas'); c.width = 512; c.height = 128; const g = c.getContext('2d');
+  g.fillStyle = 'rgba(34,27,23,0.85)'; g.beginPath(); g.roundRect(8, 24, 496, 80, 16); g.fill();
+  g.fillStyle = '#fff'; g.font = '600 44px Public Sans, system-ui, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(text, 256, 64);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+  const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, depthTest: false })); s.scale.set(4 * scale, 1 * scale, 1); s.position.set(x, y, z); scene.add(s); return s;
+}
+label('Press', -18.5, 7.2, 0); label('Green node', -12, 6.0, 0); label('Dryer', -6.5, 5.3, 0); label('Glaze', 0.5, 4.6, 0, 0.8); label('Digital print', 4.2, 4.6, 0, 0.8);
+label('Roller kiln', 11.5, 7.6, 0); label('Fired node', 19.5, 6.0, 0); label('Sorter', 25, 4.6, 0, 0.8); label('Cloud dashboard', 3.5, 12.6, -6, 1.2);
+
+// ---------- tiles simulation
+const tiles = []; const stats = { inspected: 0, green: 0, fired: 0 };
+const TILE_GEO = new THREE.BoxGeometry(1.2, 0.09, 1.2);
+let spawnClock = 0; const SPEED = reduced ? 1.6 : 2.6;
+function spawnTile() {
+  const r = Math.random();
+  const defect = r < 0.22 ? (r < 0.15 ? 'green' : 'fired') : null; // 15% press faults, 7% kiln faults
+  const m = new THREE.Mesh(TILE_GEO, M.green); m.castShadow = true; m.position.set(-16.5, BELT_Y + 0.14, 0); scene.add(m);
+  tiles.push({ m, defect, state: 'green', flagged: false, diverted: false, vz: 0 });
+}
+function tick(dt) {
+  spawnClock += dt; if (spawnClock > 1.35) { spawnClock = 0; spawnTile(); }
+  for (let i = tiles.length - 1; i >= 0; i--) {
+    const t = tiles[i]; const p = t.m.position;
+    if (!t.diverted) {
+      p.x += SPEED * dt;
+      if (t.state === 'green' && p.x > 7.5) { t.state = 'fired'; t.m.material = firedMats[Math.floor(Math.random() * firedMats.length)]; }
+      if (!t.flagged && t.defect === 'green' && p.x > -12.1) { t.flagged = true; t.m.material = M.defect; stats.inspected++; stats.green++; flash(greenNode); }
+      else if (!t.flagged && p.x > -12.1 && p.x < -11) { t.flagged = true; stats.inspected++; }
+      if (t.flagged && t.defect === 'green' && p.x > -11.6) { t.diverted = true; t.vz = 3.2; }
+      if (t.defect === 'fired' && p.x > 19.4 && !t.diverted) { t.m.material = M.defect; stats.fired++; t.diverted = true; t.vz = 3.2; flash(firedNode); }
+    } else {
+      p.z += t.vz * dt; if (p.z > 2.4) { p.y = Math.max(0.55, p.y - 2 * dt); }
+      if (p.z > 2.9) { scene.remove(t.m); tiles.splice(i, 1); continue; }
+    }
+    if (p.x > 26.5) { scene.remove(t.m); tiles.splice(i, 1); }
+  }
+}
+const flashes = [];
+function flash(node) { const f = node.userData.pusher; f.position.z = -1.4; flashes.push({ f, t: 0 }); }
+
+// ---------- dashboard drawing
+let gasSaved = 0;
+function drawDash() {
+  const g = dctx; g.fillStyle = '#17120f'; g.fillRect(0, 0, 1024, 512);
+  g.fillStyle = '#f1e9e1'; g.font = '600 40px Public Sans, system-ui, sans-serif'; g.fillText('Line 2 · live', 40, 70);
+  g.fillStyle = '#b3a497'; g.font = '26px IBM Plex Mono, monospace'; g.fillText(new Date().toLocaleTimeString(), 820, 70);
+  const first = stats.inspected ? Math.round(100 * (stats.inspected - stats.green - stats.fired) / stats.inspected) : 100;
+  const cells = [['Inspected', stats.inspected, '#4fb3c4'], ['Green rejects', stats.green, '#e8773f'], ['Fired rejects', stats.fired, '#f08a7e'], ['First grade', first + '%', '#8fbf6a']];
+  cells.forEach((c, i) => { const x = 40 + i * 245; g.fillStyle = '#231c18'; g.beginPath(); g.roundRect(x, 110, 225, 130, 14); g.fill(); g.fillStyle = c[2]; g.font = '700 56px Fraunces, Georgia, serif'; g.fillText(String(c[1]), x + 20, 190); g.fillStyle = '#b3a497'; g.font = '22px Public Sans, system-ui'; g.fillText(c[0], x + 20, 225); });
+  g.fillStyle = '#b3a497'; g.font = '22px Public Sans, system-ui'; g.fillText('Defects per 10 minutes, by class', 40, 300);
+  const bars = [['chip', 7], ['crack', 4], ['lamination', 3], ['pinhole', 5], ['warp', 2], ['shade', 2]];
+  bars.forEach((b, i) => { const v = Math.max(1, b[1] + Math.round(Math.sin(performance.now() / 3000 + i) * 2)); const x = 40 + i * 160; g.fillStyle = i < 3 ? '#e8773f' : '#4fb3c4'; g.fillRect(x, 460 - v * 14, 110, v * 14); g.fillStyle = '#b3a497'; g.font = '20px IBM Plex Mono, monospace'; g.fillText(b[0], x, 490); });
+  g.fillStyle = '#8fbf6a'; g.font = '22px Public Sans, system-ui'; g.fillText('Recommended: press zone 2 pressure −2% · kiln zone 4 −5 °C (operator to confirm)', 40, 275);
+  dashTex.needsUpdate = true;
+}
+
+// ---------- stations
+const stations = [
+  { id: 'overview', name: 'Overview', target: [4, 2, 0], cam: [4, 12, 30], title: 'The whole loop on one line', body: 'Green bodies leave the press, pass the green node, the dryer, glaze and digital print, the roller kiln, then the fired node and the sorter. Both nodes stream every tile record to the cloud dashboard; the root-cause engine sends set-point recommendations back to the press and the kiln.', items: ['Orange gantries: inspection nodes', 'Teal lines: tile data up to the cloud', 'Green dashed lines: set-points back to machines'] },
+  { id: 'press', name: 'Press', target: [-18.5, 2.5, 0], cam: [-25, 7, 10], title: 'Hydraulic press', body: 'Where most structural defects are born: uneven die fill, poor de-airing (laminations), chipped edges from ejection. The press pressure and fill telemetry is the first input the loop reads.', items: ['Telemetry read: specific pressure, fill depth, cycle time', 'Receives advisory set-points from the loop'] },
+  { id: 'green', name: 'Green node', target: [-12, 2.4, 0], cam: [-8.5, 6.5, 8], title: 'Green-stage node', body: 'Press-exit inspection of the unfired tile. Catches chips, cracks, lumps, thickness and density faults before any gas is spent. Rejected green tiles drop into the bin and go straight back to the mill.', items: ['Line-scan camera with grazing light bars (both sides)', '3D laser profiler: red fan, ±50 µm height map', 'Load-cell plate under the belt: weight + volume = density', 'Thermal camera for internal laminations', 'Pneumatic rejector and recycling bin', 'Edge GPU cabinet, under 20 ms per tile'] },
+  { id: 'dryer', name: 'Dryer', target: [-6.5, 2.4, 0], cam: [-3, 7, 9], title: 'Dryer', body: 'Removes residual moisture. Drying cracks and moisture gradients show up at the dryer exit, which is where the thermal camera of the green node is most sensitive to laminations.', items: ['Telemetry read: zone temperatures, humidity, belt speed'] },
+  { id: 'glaze', name: 'Glaze & print', target: [2.3, 2.4, 0], cam: [2.5, 6.5, 9], title: 'Glaze line and digital print', body: 'Glaze application and inkjet decoration. Drips, missing glaze and print misregistration are still catchable on the unfired tile with 2D vision, before the kiln.', items: ['Telemetry read: glaze density, print head status'] },
+  { id: 'kiln', name: 'Kiln', target: [11.5, 2.5, 0], cam: [11, 9, 13], title: 'Roller kiln', body: 'About 60% of the plant\'s thermal energy is spent here. Every tile the green node did not reject burns the same gas. Black core, pyroplastic warpage and shade variation are created in these zones and can only be caught at the fired node.', items: ['Telemetry read: zone temperature curves, burner pressure, roller speed', 'Receives advisory set-points from the loop'] },
+  { id: 'fired', name: 'Fired node', target: [19.5, 2.4, 0], cam: [23, 6.5, 8], title: 'Fired-stage node', body: 'Kiln-exit inspection of the finished tile. A multi-camera array runs the surface model trained on the plant\'s own designs; the laser profiler measures flatness and calibre to ISO 10545-2. Grade signal goes to the sorter.', items: ['Three-camera array with polarised light bars', '3D laser profiler for curvature, warpage, wedging, calibre', 'YOLO-family surface model on an edge GPU', 'Reject diverter for structural failures'] },
+  { id: 'cloud', name: 'Cloud dashboard', target: [3.5, 9, -6], cam: [3.5, 12, 8], title: 'Cloud dashboard and root-cause engine', body: 'Every tile record lands here with time, position and measurements. Defect bursts are correlated with press, dryer and kiln telemetry; recommendations go to the operator first, and later over OPC-UA to the machines.', items: ['Live line view, OEE and grade split', 'Automatic shift and daily reports', 'Technician task allocation', 'R&D database of every tile ever made'] },
+];
+const picker = document.getElementById('picker'); const panel = document.getElementById('panel');
+let flight = null;
+function select(id) {
+  const s = stations.find(x => x.id === id) || stations[0];
+  picker.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.id === s.id)));
+  panel.innerHTML = `<h3>${s.title}</h3><p>${s.body}</p><ul>${s.items.map(i => `<li>${i}</li>`).join('')}</ul>`;
+  flight = { t: 0, from: camera.position.clone(), to: new THREE.Vector3(...s.cam), tFrom: controls.target.clone(), tTo: new THREE.Vector3(...s.target) };
+  if (location.hash.slice(1) !== s.id && s.id !== 'overview') { try { history.replaceState(null, '', '#' + s.id); } catch (e) {} }
+}
+stations.forEach(s => { const b = document.createElement('button'); b.type = 'button'; b.textContent = s.name; b.dataset.id = s.id; b.setAttribute('aria-pressed', 'false'); b.addEventListener('click', () => select(s.id)); picker.appendChild(b); });
+addEventListener('hashchange', () => select(location.hash.slice(1) || 'overview'));
+select(location.hash.slice(1) || 'overview');
+
+// ---------- resize + loop
+function resize() { const w = stage.clientWidth, h = stage.clientHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
+new ResizeObserver(resize).observe(stage); resize();
+const clock = new THREE.Clock(); let dashTimer = 0;
+const hIn = document.getElementById('h-in'), hG = document.getElementById('h-g'), hF = document.getElementById('h-f'), hGas = document.getElementById('h-gas');
+function animate() {
+  requestAnimationFrame(animate);
+  const dt = Math.min(clock.getDelta(), 0.05); const now = performance.now();
+  tick(dt);
+  ram.position.y = 3.4 - Math.abs(Math.sin(now / 600)) * 0.9;
+  burners.forEach((b, i) => { b.material = M.kilnGlow; b.scale.setScalar(1 + 0.25 * Math.sin(now / 200 + i)); });
+  packets.forEach(p => { p.t = (p.t + p.speed * dt) % 1; p.m.position.lerpVectors(p.from, p.to, p.t); p.m.position.y += Math.sin(p.t * Math.PI) * 1.2; });
+  for (let i = flashes.length - 1; i >= 0; i--) { const f = flashes[i]; f.t += dt; f.f.position.z = -1.4 - Math.min(0.5, f.t * 2) + (f.t > 0.4 ? (f.t - 0.4) * 2 : 0); if (f.t > 0.9) { f.f.position.z = -1.9; flashes.splice(i, 1); } }
+  if (flight) { flight.t = Math.min(1, flight.t + dt / 1.1); const e = 1 - Math.pow(1 - flight.t, 3); camera.position.lerpVectors(flight.from, flight.to, e); controls.target.lerpVectors(flight.tFrom, flight.tTo, e); if (flight.t >= 1) flight = null; }
+  controls.update();
+  dashTimer += dt; if (dashTimer > 0.5) { dashTimer = 0; gasSaved = stats.green * 0.38; drawDash(); hIn.textContent = stats.inspected; hG.textContent = stats.green; hF.textContent = stats.fired; hGas.textContent = gasSaved.toFixed(1) + ' m³'; }
+  renderer.render(scene, camera);
+}
+drawDash(); animate();
+
+// ---------- calculator
+const $ = (id) => document.getElementById(id);
+const fmt = (n) => { if (n >= 1e7) return (n / 1e7).toFixed(2) + ' crore'; if (n >= 1e5) return (n / 1e5).toFixed(1) + ' lakh'; return Math.round(n).toLocaleString('en-IN'); };
+function calc() {
+  const out = +$('c-out').value || 0, area = +$('c-area').value || 0.36, gas = +$('c-gas').value || 0, price = +$('c-price').value || 0, mat = +$('c-mat').value || 0, pct = (+$('c-pct').value || 0) / 100, days = +$('c-days').value || 0;
+  const m2 = out * pct, tilesDay = m2 / area, gasDay = tilesDay * gas, gasYr = gasDay * price * days, matYr = m2 * mat * days;
+  $('r-tiles').textContent = Math.round(tilesDay).toLocaleString('en-IN'); $('r-gasm3').textContent = Math.round(gasDay).toLocaleString('en-IN');
+  $('r-gas').textContent = fmt(gasYr); $('r-mat').textContent = fmt(matYr); $('r-total').textContent = fmt(gasYr + matYr);
+}
+document.getElementById('calc').addEventListener('input', calc); document.getElementById('calc').addEventListener('submit', e => { e.preventDefault(); calc(); }); calc();
+</script>
+
+</body>
+</html>
