@@ -4,6 +4,8 @@ Prepared 5 November 2026 from the uploaded HEAT / ATF Window 3a (STEM) submissio
 `Final_W-3a_STEM_Section-A.docx`, `Final_W-3a_STEM_Section-B.docx`, `Annex-1.docx`.
 (The fourth upload, `Ceramic_Tile_Defect_Detection_System`, arrived as a 0-byte file and could not be read.)
 
+> **Update 6 Nov 2026:** all percentage targets in this report (60–70% pre-kiln coverage, 55–80% cost reduction, payback claims) are withdrawn from the customer-facing materials. The project promises no detection rate or savings percentage. See `Green_Body_Detection_Options.md` for the evidence review and the gated experiment plan.
+
 ---
 
 ## Part 1 — Number and consistency mismatches (fix before the final submission)

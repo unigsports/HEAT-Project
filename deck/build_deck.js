@@ -68,41 +68,41 @@ const H = THEME.colors;
   s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "The problem" });
   addTitle(s, "Every defective tile in the kiln burns gas for nothing");
   const stats = [
-    ["~60%", "of a tile plant's thermal energy is spent in the kiln. Firing a reject costs the same gas as firing a first-grade tile.", H.accent1],
-    ["3% + 2%", "typical scrap: ~3% of pieces are already scrap before firing, ~2% more after it (EU plant data). Most fired rejects started as a green-body fault.", H.accent2],
-    ["100%", "of green scrap goes straight back to the mill. Fired scrap is chemically inert: landfill, or crushed at a loss. Nothing is recovered.", H.accent3],
+    ["Same gas", "Firing a reject costs the same gas as firing a first-grade tile. The kiln is the largest single energy user in a tile plant.", H.accent1],
+    ["Found late", "Most defects are found at the sorting line, after the dryer, glaze line and kiln have all added cost.", H.accent2],
+    ["Recyclable", "Green scrap goes straight back to the mill. Fired scrap is chemically inert: landfill, or crushed at a loss.", H.accent3],
   ];
   stats.forEach((st, i) => {
     const x = 0.5 + i * 3.1;
     box(s, x, 1.4, 2.9, 2.6, H.lt2, "stat card " + i);
-    txt(s, st[0], { x: x + 0.25, y: 1.55, w: 2.4, h: 0.9, fontSize: 40, bold: true, color: st[2], fontFace: "Cambria" });
+    txt(s, st[0], { x: x + 0.25, y: 1.55, w: 2.4, h: 0.9, fontSize: 32, bold: true, color: st[2], fontFace: "Cambria" });
     txt(s, st[1], { x: x + 0.25, y: 2.5, w: 2.45, h: 1.4, fontSize: 12.5, color: C.text1 });
   });
   txt(s, "Today DBL, like every plant in the country, finds out which tiles failed only at the sorting line, after the dryer, the glaze line and the kiln have all added cost. Gas is the input the industry cannot get more of. The cheapest kilowatt is the one not spent on a tile that was already broken at the press.", { x: 0.5, y: 4.2, w: 9, h: 0.9, fontSize: 13, color: C.accent5 });
-  s.addNotes("Scrap percentages are from a European pre-2002 plant study; DBL's own numbers will replace them during the site audit.");
+  s.addNotes("No scrap rate is claimed here. DBL's own scrap by stage will be measured in the first-phase audit.");
 
   // ================= 3. Cost of late detection (chart)
   s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "The problem" });
-  addTitle(s, "What late detection costs a 35,000 m²/day plant");
-  s.addChart(pres.ChartType.bar, [{ name: "Annual saving (BDT crore)", labels: ["0.5% caught", "1% caught", "1.5% caught", "2% caught"], values: [1.05, 2.1, 3.15, 4.2] }], {
+  addTitle(s, "What one tile stopped before the kiln is worth");
+  s.addChart(pres.ChartType.bar, [{ name: "BDT per tile", labels: ["Kiln gas", "Body + glaze material", "Total per tile"], values: [11.4, 54, 65.4] }], {
     x: 0.5, y: 1.3, w: 5.0, h: 3.7, barDir: "col", chartColors: [H.accent1],
-    showTitle: true, title: "Annual saving vs. share of output rejected before the kiln", titleFontSize: 12, titleColor: H.dk1, titleFontFace: "+mn-lt",
+    showTitle: true, title: "Cost sunk in one 600×600 tile, BDT (illustrative)", titleFontSize: 12, titleColor: H.dk1, titleFontFace: "+mn-lt",
     showValue: true, dataLabelPosition: "outEnd", dataLabelFormatCode: "0.0", dataLabelFontSize: 11, dataLabelColor: H.dk1, dataLabelFontFace: "+mn-lt",
     catAxisLabelFontSize: 11, catAxisLabelColor: H.accent5, catAxisLabelFontFace: "+mn-lt", catGridLine: { style: "none" },
-    valAxisLabelFontSize: 10, valAxisLabelColor: H.accent5, valAxisLabelFontFace: "+mn-lt", valGridLine: { color: H.lt2, size: 0.75 }, valAxisMaxVal: 5, valAxisMajorUnit: 1,
-    valAxisTitle: "BDT crore / year", showValAxisTitle: true, valAxisTitleFontSize: 10, valAxisTitleColor: H.accent5, valAxisTitleFontFace: "+mn-lt",
+    valAxisLabelFontSize: 10, valAxisLabelColor: H.accent5, valAxisLabelFontFace: "+mn-lt", valGridLine: { color: H.lt2, size: 0.75 }, valAxisMaxVal: 80, valAxisMajorUnit: 20,
+    valAxisTitle: "BDT per tile", showValAxisTitle: true, valAxisTitleFontSize: 10, valAxisTitleColor: H.accent5, valAxisTitleFontFace: "+mn-lt",
     showLegend: false,
   });
   box(s, 5.8, 1.3, 3.7, 3.7, H.lt2, "assumptions card");
-  txt(s, "Illustrative, to be calibrated with DBL's data", { x: 6.0, y: 1.45, w: 3.3, h: 0.4, fontSize: 12, bold: true, color: C.accent2 });
+  txt(s, "How to read this", { x: 6.0, y: 1.45, w: 3.3, h: 0.4, fontSize: 12, bold: true, color: C.accent2 });
   s.addText(bullets([
-    "Output 35,000 m²/day, 600×600 tiles (≈97,000 tiles/day), 330 days",
-    "Kiln gas ≈ 0.38 m³ per tile at BDT 30/m³",
-    "Body + glaze material ≈ BDT 150/m², fully recovered when rejected green",
-    "1% caught pre-kiln ≈ 970 tiles/day: BDT 37 lakh/yr of gas plus BDT 1.7 crore/yr of material",
-    "Not counted: labour on dead tiles, fired-waste disposal, downtime from undetected process drift",
+    "A 600×600 tile is 0.36 m²",
+    "Kiln gas about 0.38 m³ per tile at BDT 30/m³ (assumed)",
+    "Body and glaze material about BDT 150/m² (assumed), fully recovered when a tile is rejected green",
+    "Every 100 tiles per day stopped before firing is worth about BDT 21 lakh a year over 330 days",
+    "No rate of rejection is claimed. DBL's own numbers replace every assumption here",
   ], 11.5), { x: 6.0, y: 1.9, w: 3.35, h: 3.0, isTextBox: true, margin: 0, color: C.text1, valign: "top" });
-  s.addNotes("Assumptions are on the slide so DBL can challenge each one. The material line dominates the gas line; the gas line is the national-interest argument.");
+  s.addNotes("This slide values a single tile, not a percentage of output. Gas and material prices are assumptions to be confirmed with DBL. Labour, fired-waste disposal and downtime are not counted.");
 
   // ================= 4. Architecture
   pres.addSection({ title: "The system" });
@@ -130,21 +130,21 @@ const H = THEME.colors;
 
   // ================= 5. Green node table
   s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "The system" });
-  addTitle(s, "Green-stage node: what it catches, and how");
+  addTitle(s, "Green-stage node: what we aim to catch, and how");
   const hdr = (t) => ({ text: t, options: { bold: true, color: H.lt1, fill: { color: H.dk2 }, fontSize: 11.5 } });
   const cell = (t, o) => ({ text: t, options: Object.assign({ fontSize: 11, color: H.dk1 }, o || {}) });
   const conf = (t, c) => ({ text: t, options: { fontSize: 11, bold: true, color: c, align: "center" } });
   const rows = [
-    [hdr("Green-body defect (press exit / dryer exit)"), hdr("Sensor"), hdr("Confidence")],
-    [cell("Edge chips, corner breaks, surface and drying cracks"), cell("Line-scan camera with low-angle grazing light; matte green surface gives good contrast"), conf("High", H.accent3)],
-    [cell("Thickness variation, uneven die fill"), cell("3D laser line profiler, height map at ±50 µm"), conf("High", H.accent3)],
-    [cell("Density variation (root of later warpage and calibre spread)"), cell("Load cell under the belt + 3D volume from the profiler = bulk density of every tile"), conf("High", H.accent3)],
-    [cell("Powder lumps, contamination, die marks, print misregistration"), cell("2D vision, model trained on DBL's own tile designs"), conf("High", H.accent3)],
-    [cell("Glaze drips, missing glaze, wet-glaze pinholes"), cell("2D vision after the glaze line"), conf("Medium", H.accent6)],
-    [cell("Internal lamination (press de-airing failure)"), cell("Thermal camera at the dryer exit (lamination = heat barrier) plus tap-test microphone; the research part of the project"), conf("Medium", H.accent6)],
+    [hdr("Green-body defect (press exit / dryer exit)"), hdr("Sensor"), hdr("Outlook")],
+    [cell("Edge chips, corner breaks, surface and drying cracks"), cell("Line-scan camera with low-angle grazing light; matte green surface gives good contrast"), conf("Likely", H.accent3)],
+    [cell("Thickness variation, uneven die fill"), cell("3D laser line profiler, height map at ±50 µm"), conf("Likely", H.accent3)],
+    [cell("Density variation (root of later warpage and calibre spread)"), cell("Load cell under the belt + 3D volume from the profiler = bulk density of every tile"), conf("Likely", H.accent3)],
+    [cell("Powder lumps, contamination, die marks, print misregistration"), cell("2D vision, model trained on DBL's own tile designs"), conf("Likely", H.accent3)],
+    [cell("Glaze drips, missing glaze, wet-glaze pinholes"), cell("2D vision after the glaze line"), conf("To test", H.accent6)],
+    [cell("Internal lamination (press de-airing failure)"), cell("Open research item: air-coupled ultrasound, active thermography and tap tests are candidates, each tested on a bench with sectioned tiles first"), conf("Research", H.accent4)],
   ];
   s.addTable(rows, { x: 0.5, y: 1.3, w: 9.0, colW: [3.1, 4.7, 1.2], border: { type: "solid", pt: 0.5, color: H.lt2 }, fill: { color: H.lt1 }, rowH: 0.45, valign: "middle", autoPage: false, fontFace: "Calibri" });
-  txt(s, "Not catchable before the kiln: black core, kiln-induced warpage, shade variation, crazing, roller marks. Those belong to the fired node. Realistic target: 60–70% of structural rejects stopped before firing, every reject classified and traced to a stage.", { x: 0.5, y: 4.55, w: 9, h: 0.6, fontSize: 11.5, color: C.accent5 });
+  txt(s, "Not catchable before the kiln: black core, kiln-induced warpage, shade variation, crazing, roller marks. Those belong to the fired node. Which defects start before the kiln, and how many, is what the first-phase audit with DBL will measure. No detection rate is promised.", { x: 0.5, y: 4.55, w: 9, h: 0.6, fontSize: 11.5, color: C.accent5 });
 
   // ================= 6. Fired node
   s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "The system" });
@@ -211,7 +211,7 @@ const H = THEME.colors;
   const h2 = (t, c) => ({ text: t, options: { bold: true, color: H.lt1, fill: { color: c }, fontSize: 11.5 } });
   const cmp = [
     [h2("", H.accent5), h2("Imported proprietary systems", H.accent5), h2("Ceramic Intelligence Loop", H.dk2)],
-    [cell("Price per inspection station", { bold: true }), cell("USD 200,000–500,000 (BDT 2.4–6 crore)"), cell("About BDT 25–40 lakh in hardware, plus a software subscription")],
+    [cell("Price per inspection station", { bold: true }), cell("USD 200,000–500,000 (BDT 2.4–6 crore)"), cell("Indicative BDT 25–40 lakh hardware per station, to be fixed after the pilot, plus a software subscription")],
     [cell("Support", { bold: true }), cell("Service engineer flown in; weeks of downtime risk"), cell("Team in Dhaka, same-day response, spare parts stocked locally")],
     [cell("Data", { bold: true }), cell("Lives in the vendor's cloud and format"), cell("Stays on DBL's servers; open formats; DBL owns its defect database")],
     [cell("Which lines", { bold: true }), cell("Designed for the vendor's own new lines"), cell("Retrofits any line, including older Italian and KEDA presses, via OPC-UA")],
@@ -219,7 +219,7 @@ const H = THEME.colors;
     [cell("Green-stage inspection", { bold: true }), cell("Available on top-end slab lines only"), cell("Core of the system; built for standard tile formats")],
   ];
   s.addTable(cmp, { x: 0.5, y: 1.3, w: 9.0, colW: [2.1, 3.3, 3.6], border: { type: "solid", pt: 0.5, color: H.lt2 }, fill: { color: H.lt1 }, rowH: 0.46, valign: "middle", autoPage: false, fontFace: "Calibri" });
-  txt(s, "Imported systems are excellent machines. They were priced for Sassuolo, not for a tier-2 line in Gazipur. Our aim is 55–80% lower capital cost per station with the data kept at home.", { x: 0.5, y: 4.65, w: 9, h: 0.5, fontSize: 11.5, color: C.accent5 });
+  txt(s, "Imported systems are excellent machines. They were priced for Sassuolo, not for a tier-2 line in Gazipur. Our aim is a price local plants can afford, with the data kept at home.", { x: 0.5, y: 4.65, w: 9, h: 0.5, fontSize: 11.5, color: C.accent5 });
 
   // ================= 10. Ask / Get
   pres.addSection({ title: "The pilot" });
@@ -265,31 +265,30 @@ const H = THEME.colors;
 
   // ================= 12. Economics
   s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "The pilot" });
-  addTitle(s, "Pilot economics for DBL");
-  const econ = [["BDT 0", "hardware cost to DBL during the 24-month pilot; equipment is funded by the research grant", H.accent3], ["< 12 months", "payback on a commercial two-node installation if 1% of output is caught before the kiln", H.accent1], ["55–80%", "lower capital cost per station than the imported alternative", H.accent2]];
+  addTitle(s, "What the pilot will measure with DBL");
+  const econ = [["BDT 0", "hardware cost to DBL during the 24-month pilot; equipment is funded by the research grant", H.accent3], ["Measured", "savings are measured against DBL's own baseline, with no assumed target", H.accent1], ["Local", "support, spares and retraining from Dhaka, with data kept on DBL's servers", H.accent2]];
   econ.forEach((e, i) => {
     const y = 1.35 + i * 1.2;
     box(s, 0.5, y, 4.4, 1.05, H.lt2, "econ card " + i);
-    txt(s, e[0], { x: 0.7, y: y + 0.1, w: 2.1, h: 0.85, fontSize: 22, bold: true, color: e[2], fontFace: "Cambria", valign: "middle" });
-    txt(s, e[1], { x: 2.85, y: y + 0.1, w: 1.95, h: 0.85, fontSize: 11, valign: "middle" });
+    txt(s, e[0], { x: 0.7, y: y + 0.1, w: 1.7, h: 0.85, fontSize: 22, bold: true, color: e[2], fontFace: "Cambria", valign: "middle" });
+    txt(s, e[1], { x: 2.45, y: y + 0.1, w: 2.35, h: 0.85, fontSize: 11, valign: "middle" });
   });
-  s.addChart(pres.ChartType.bar, [
-    { name: "Cumulative saving", labels: ["Q1", "Q2", "Q3", "Q4", "Q5", "Q6", "Q7", "Q8"], values: [0, 0.3, 0.8, 1.3, 1.8, 2.4, 2.9, 3.5] },
-  ], {
-    x: 5.1, y: 1.3, w: 4.4, h: 3.7, barDir: "col", chartColors: [H.accent2],
-    showTitle: true, title: "Cumulative saving during the pilot, BDT crore (1% caught from Q2, ramp to 1.5%)", titleFontSize: 11, titleColor: H.dk1, titleFontFace: "+mn-lt",
-    showValue: true, dataLabelPosition: "outEnd", dataLabelFormatCode: "0.0", dataLabelFontSize: 10, dataLabelColor: H.dk1, dataLabelFontFace: "+mn-lt",
-    catAxisLabelFontSize: 10, catAxisLabelColor: H.accent5, catAxisLabelFontFace: "+mn-lt", catGridLine: { style: "none" },
-    valAxisLabelFontSize: 10, valAxisLabelColor: H.accent5, valAxisLabelFontFace: "+mn-lt", valGridLine: { color: H.lt2, size: 0.75 }, valAxisMaxVal: 4, valAxisMajorUnit: 1,
-    showLegend: false,
-  });
-  s.addNotes("The chart uses the same assumptions as slide 3. Quarter 1 is installation and baseline; savings start when the green node begins rejecting in quarter 2.");
+  box(s, 5.1, 1.35, 4.4, 3.6, H.dk2, "measure card");
+  txt(s, "Baseline and results, reported quarterly", { x: 5.35, y: 1.5, w: 3.9, h: 0.5, fontSize: 15, bold: true, color: C.background1 });
+  s.addText(bullets([
+    "Where each reject originates: press, dryer, glaze or kiln",
+    "Scrap by stage and gas per m², before and during the pilot",
+    "Which green-stage defects the cameras and laser can actually see",
+    "False rejects reported next to every detection result",
+    "Internal laminations: tested on a bench with sectioned tiles before any claim",
+  ], 12), { x: 5.35, y: 2.1, w: 3.9, h: 2.7, isTextBox: true, margin: 0, color: C.background1, valign: "top" });
+  s.addNotes("We report what we find, including negative results. DBL decides after the audit whether to continue to the next phase.");
 
   // ================= 13. Risks
   s = pres.addSlide({ masterName: "CONTENT", sectionTitle: "The pilot" });
   addTitle(s, "Risks we expect, and how we handle them");
   const risks = [
-    ["Internal laminations are invisible to cameras", "Thermal camera at the dryer exit and tap-test acoustics are in the design; density-per-tile from weight and volume catches most press faults anyway."],
+    ["Internal laminations are invisible to cameras", "Treated as a research question: bench tests of ultrasound, active thermography and tap tests on sectioned tiles first. Weight and volume per tile is a cheap indirect check."],
     ["Heat, dust and vibration at the kiln exit", "IP67 enclosures with air knives and active cooling; fail-open mode so a sensor fault never stops the line."],
     ["Locked PLCs or vendor protocols", "Read-only telemetry first; advisory set-points through the operator; OPC-UA write-back only where DBL and the machine vendor agree."],
     ["Rare defects, too few examples", "Synthetic defect generation guided by ceramic engineers, plus two years of live production data."],

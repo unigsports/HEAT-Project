@@ -124,7 +124,7 @@
     <div class="viewer">
       <div class="stage" id="stage"></div>
       <div class="hud" id="hud"><span>inspected <b id="h-in">0</b></span><span>green rejects <b id="h-g">0</b></span><span>fired rejects <b id="h-f">0</b></span><span>gas saved <b id="h-gas">0 m³</b></span></div>
-      <div class="hint">drag · scroll · pick a station</div>
+      <div class="hint">illustrative simulation · drag · scroll</div>
       <aside class="panel" id="panel"></aside>
     </div>
     <div class="legend">
@@ -150,11 +150,11 @@
           <li>Line-scan camera with low-angle grazing light for chips, cracks and lumps</li>
           <li>3D laser profiler: thickness map, die-fill variation, ±50 µm</li>
           <li>Load cell + 3D volume = bulk density of every tile</li>
-          <li>Thermal camera at the dryer exit for internal laminations</li>
+          <li>Internal laminations: a research item, bench-tested first (air-coupled ultrasound, active thermography, tap test)</li>
           <li>Pneumatic rejector; green scrap goes straight back to the mill</li>
           <li>Edge GPU, under 20 ms per tile, encoder-synchronised</li>
         </ul>
-        <div class="price">Target: 60–70% of structural rejects stopped before firing<br><b>Indicative BDT 25–35 lakh</b> per station</div>
+        <div class="price">Detection rates are measured in the pilot, never promised<br><b>Indicative BDT 25–35 lakh</b> per station, to be fixed after the pilot</div>
       </article>
       <article class="tier">
         <span class="n">TIER 2</span>
@@ -167,7 +167,7 @@
           <li>3D flatness: centre curvature, edge curvature, warpage, wedging, calibre per ISO 10545-2</li>
           <li>Grade A / B / reject signal to the existing sorter</li>
         </ul>
-        <div class="price">Target: mAP ≥ 0.90, consistent across three shifts<br><b>Indicative BDT 25–40 lakh</b> per station</div>
+        <div class="price">Accuracy reported with false rejects, across all three shifts<br><b>Indicative BDT 25–40 lakh</b> per station, to be fixed after the pilot</div>
       </article>
       <article class="tier">
         <span class="n">TIER 3</span>
@@ -200,22 +200,22 @@
   <section id="coverage">
     <span class="eyebrow">Can green-body defects really be seen?</span>
     <h2>Coverage map, stated honestly</h2>
-    <p class="muted">What each sensor catches before the kiln, and what only the fired node can catch. Confidence reflects published results and our own tests, not sales optimism.</p>
+    <p class="muted">What each sensor catches before the kiln, and what only the fired node can catch. Outlook is our expectation before any green-stage data exists. Nothing here is a measured detection rate.</p>
     <div class="tablewrap">
       <table>
-        <thead><tr><th>Defect</th><th>Stage it forms</th><th>Caught by</th><th>Sensor</th><th>Confidence</th></tr></thead>
+        <thead><tr><th>Defect</th><th>Stage it forms</th><th>Caught by</th><th>Sensor</th><th>Outlook</th></tr></thead>
         <tbody>
-          <tr><td>Edge chips, corner breaks</td><td>Press, handling</td><td>Green node</td><td>Line-scan + grazing light</td><td><span class="pill high">High</span></td></tr>
-          <tr><td>Surface and drying cracks ≥ 0.2 mm</td><td>Press, dryer</td><td>Green node</td><td>Line-scan + grazing light</td><td><span class="pill high">High</span></td></tr>
-          <tr><td>Thickness variation, uneven die fill</td><td>Press</td><td>Green node</td><td>3D laser profiler</td><td><span class="pill high">High</span></td></tr>
-          <tr><td>Density variation</td><td>Press</td><td>Green node</td><td>Load cell + 3D volume</td><td><span class="pill high">High</span></td></tr>
-          <tr><td>Powder lumps, contamination, die marks</td><td>Press</td><td>Green node</td><td>2D vision</td><td><span class="pill high">High</span></td></tr>
-          <tr><td>Print misregistration, glaze drips, missing glaze</td><td>Glaze line</td><td>Green node (after glaze)</td><td>2D vision</td><td><span class="pill high">High</span></td></tr>
-          <tr><td>Internal lamination</td><td>Press (de-airing)</td><td>Green node</td><td>Thermal camera after dryer, tap-test acoustics</td><td><span class="pill med">Medium</span></td></tr>
-          <tr><td>Pinholes</td><td>Glaze, firing</td><td>Both</td><td>2D vision, wet and fired</td><td><span class="pill med">Medium</span></td></tr>
-          <tr><td>Black core, over/under-firing</td><td>Kiln</td><td>Fired node</td><td>Cameras + kiln telemetry</td><td><span class="pill high">High</span></td></tr>
-          <tr><td>Warpage, calibre drift, wedging</td><td>Kiln, press</td><td>Fired node</td><td>3D laser profiler</td><td><span class="pill high">High</span></td></tr>
-          <tr><td>Shade variation, crazing, roller marks</td><td>Kiln</td><td>Fired node</td><td>Multi-camera array</td><td><span class="pill high">High</span></td></tr>
+          <tr><td>Edge chips, corner breaks</td><td>Press, handling</td><td>Green node</td><td>Line-scan + grazing light</td><td><span class="pill high">Likely</span></td></tr>
+          <tr><td>Surface and drying cracks ≥ 0.2 mm</td><td>Press, dryer</td><td>Green node</td><td>Line-scan + grazing light</td><td><span class="pill high">Likely</span></td></tr>
+          <tr><td>Thickness variation, uneven die fill</td><td>Press</td><td>Green node</td><td>3D laser profiler</td><td><span class="pill high">Likely</span></td></tr>
+          <tr><td>Density variation</td><td>Press</td><td>Green node</td><td>Load cell + 3D volume</td><td><span class="pill high">Likely</span></td></tr>
+          <tr><td>Powder lumps, contamination, die marks</td><td>Press</td><td>Green node</td><td>2D vision</td><td><span class="pill high">Likely</span></td></tr>
+          <tr><td>Print misregistration, glaze drips, missing glaze</td><td>Glaze line</td><td>Green node (after glaze)</td><td>2D vision</td><td><span class="pill high">Likely</span></td></tr>
+          <tr><td>Internal lamination</td><td>Press (de-airing)</td><td>Green node</td><td>Candidates to bench-test: air-coupled ultrasound, active thermography, tap test</td><td><span class="pill low">Research</span></td></tr>
+          <tr><td>Pinholes</td><td>Glaze, firing</td><td>Both</td><td>2D vision, wet and fired</td><td><span class="pill med">To test</span></td></tr>
+          <tr><td>Black core, over/under-firing</td><td>Kiln</td><td>Fired node</td><td>Cameras + kiln telemetry</td><td><span class="pill high">Likely</span></td></tr>
+          <tr><td>Warpage, calibre drift, wedging</td><td>Kiln, press</td><td>Fired node</td><td>3D laser profiler</td><td><span class="pill high">Likely</span></td></tr>
+          <tr><td>Shade variation, crazing, roller marks</td><td>Kiln</td><td>Fired node</td><td>Multi-camera array</td><td><span class="pill high">Likely</span></td></tr>
         </tbody>
       </table>
     </div>
@@ -223,16 +223,15 @@
 
   <section id="savings">
     <span class="eyebrow">Savings calculator</span>
-    <h2>What pre-kiln rejection is worth to a plant</h2>
-    <p class="muted">Defaults describe a 35,000 m²/day plant on 600×600 tiles. Change any number to match your own line. The material line is usually larger than the gas line; the gas line is the national energy argument.</p>
+    <h2>What a tile stopped before the kiln is worth</h2>
+    <p class="muted">Enter how many tiles a day your line stops before the kiln. No rate is assumed or promised: the figure is yours. Gas price and material cost are assumptions to replace with your own numbers.</p>
     <div class="calc">
       <form id="calc">
-        <label>Output, m² per day <input id="c-out" type="number" value="35000" min="100" step="500"></label>
-        <label>Tile area, m² (600×600 = 0.36) <input id="c-area" type="number" value="0.36" min="0.01" step="0.01"></label>
+                <label>Tile area, m² (600×600 = 0.36) <input id="c-area" type="number" value="0.36" min="0.01" step="0.01"></label>
         <label>Kiln gas per tile, m³ <input id="c-gas" type="number" value="0.38" min="0.01" step="0.01"></label>
         <label>Gas price, BDT per m³ <input id="c-price" type="number" value="30" min="1" step="1"></label>
         <label>Body + glaze material, BDT per m² <input id="c-mat" type="number" value="150" min="1" step="10"></label>
-        <label>Share of output caught before the kiln, % <input id="c-pct" type="number" value="1" min="0.1" max="10" step="0.1"></label>
+        <label>Tiles stopped before the kiln, per day <input id="c-tiles" type="number" value="100" min="1" step="10"></label>
         <label>Production days per year <input id="c-days" type="number" value="330" min="1" max="365" step="1"></label>
       </form>
       <div class="results">
@@ -257,7 +256,7 @@
   </section>
 
   <footer>
-    Ceramic Intelligence Loop. Research proposed under the UGC Higher Education Acceleration and Transformation project, Academic Transformation Fund, Window 3a (STEM). Prices and savings on this page are indicative and will be replaced by audited figures from the pilot plant.
+    Ceramic Intelligence Loop. Research proposed under the UGC Higher Education Acceleration and Transformation project, Academic Transformation Fund, Window 3a (STEM). Prices and values on this page are indicative, the 3D line is an illustration, and no detection rate is promised. They are indicative and will be replaced by audited figures from the pilot plant.
   </footer>
 </div>
 
@@ -481,7 +480,7 @@ function drawDash() {
   g.fillStyle = '#b3a497'; g.font = '22px Public Sans, system-ui'; g.fillText('Defects per 10 minutes, by class', 40, 300);
   const bars = [['chip', 7], ['crack', 4], ['lamination', 3], ['pinhole', 5], ['warp', 2], ['shade', 2]];
   bars.forEach((b, i) => { const v = Math.max(1, b[1] + Math.round(Math.sin(performance.now() / 3000 + i) * 2)); const x = 40 + i * 160; g.fillStyle = i < 3 ? '#e8773f' : '#4fb3c4'; g.fillRect(x, 460 - v * 14, 110, v * 14); g.fillStyle = '#b3a497'; g.font = '20px IBM Plex Mono, monospace'; g.fillText(b[0], x, 490); });
-  g.fillStyle = '#8fbf6a'; g.font = '22px Public Sans, system-ui'; g.fillText('Recommended: press zone 2 pressure −2% · kiln zone 4 −5 °C (operator to confirm)', 40, 275);
+  g.fillStyle = '#8fbf6a'; g.font = '22px Public Sans, system-ui'; g.fillText('Example recommendation (illustrative, operator confirms)', 40, 275);
   dashTex.needsUpdate = true;
 }
 
@@ -489,10 +488,10 @@ function drawDash() {
 const stations = [
   { id: 'overview', name: 'Overview', target: [4, 2, 0], cam: [4, 12, 30], title: 'The whole loop on one line', body: 'Green bodies leave the press, pass the green node, the dryer, glaze and digital print, the roller kiln, then the fired node and the sorter. Both nodes stream every tile record to the cloud dashboard; the root-cause engine sends set-point recommendations back to the press and the kiln.', items: ['Orange gantries: inspection nodes', 'Teal lines: tile data up to the cloud', 'Green dashed lines: set-points back to machines'] },
   { id: 'press', name: 'Press', target: [-18.5, 2.5, 0], cam: [-25, 7, 10], title: 'Hydraulic press', body: 'Where most structural defects are born: uneven die fill, poor de-airing (laminations), chipped edges from ejection. The press pressure and fill telemetry is the first input the loop reads.', items: ['Telemetry read: specific pressure, fill depth, cycle time', 'Receives advisory set-points from the loop'] },
-  { id: 'green', name: 'Green node', target: [-12, 2.4, 0], cam: [-8.5, 6.5, 8], title: 'Green-stage node', body: 'Press-exit inspection of the unfired tile. Catches chips, cracks, lumps, thickness and density faults before any gas is spent. Rejected green tiles drop into the bin and go straight back to the mill.', items: ['Line-scan camera with grazing light bars (both sides)', '3D laser profiler: red fan, ±50 µm height map', 'Load-cell plate under the belt: weight + volume = density', 'Thermal camera for internal laminations', 'Pneumatic rejector and recycling bin', 'Edge GPU cabinet, under 20 ms per tile'] },
+  { id: 'green', name: 'Green node', target: [-12, 2.4, 0], cam: [-8.5, 6.5, 8], title: 'Green-stage node', body: 'Press-exit inspection of the unfired tile. Catches chips, cracks, lumps, thickness and density faults before any gas is spent. Rejected green tiles drop into the bin and go straight back to the mill.', items: ['Line-scan camera with grazing light bars (both sides)', '3D laser profiler: red fan, ±50 µm height map', 'Load-cell plate under the belt: weight + volume = density', 'Internal-lamination sensing: research item, bench-tested first', 'Pneumatic rejector and recycling bin', 'Edge GPU cabinet, under 20 ms per tile'] },
   { id: 'dryer', name: 'Dryer', target: [-6.5, 2.4, 0], cam: [-3, 7, 9], title: 'Dryer', body: 'Removes residual moisture. Drying cracks and moisture gradients show up at the dryer exit, which is where the thermal camera of the green node is most sensitive to laminations.', items: ['Telemetry read: zone temperatures, humidity, belt speed'] },
   { id: 'glaze', name: 'Glaze & print', target: [2.3, 2.4, 0], cam: [2.5, 6.5, 9], title: 'Glaze line and digital print', body: 'Glaze application and inkjet decoration. Drips, missing glaze and print misregistration are still catchable on the unfired tile with 2D vision, before the kiln.', items: ['Telemetry read: glaze density, print head status'] },
-  { id: 'kiln', name: 'Kiln', target: [11.5, 2.5, 0], cam: [11, 9, 13], title: 'Roller kiln', body: 'About 60% of the plant\'s thermal energy is spent here. Every tile the green node did not reject burns the same gas. Black core, pyroplastic warpage and shade variation are created in these zones and can only be caught at the fired node.', items: ['Telemetry read: zone temperature curves, burner pressure, roller speed', 'Receives advisory set-points from the loop'] },
+  { id: 'kiln', name: 'Kiln', target: [11.5, 2.5, 0], cam: [11, 9, 13], title: 'Roller kiln', body: 'The kiln is the largest single energy user in the plant. Every tile the green node did not reject burns the same gas. Black core, pyroplastic warpage and shade variation are created in these zones and can only be caught at the fired node.', items: ['Telemetry read: zone temperature curves, burner pressure, roller speed', 'Receives advisory set-points from the loop'] },
   { id: 'fired', name: 'Fired node', target: [19.5, 2.4, 0], cam: [23, 6.5, 8], title: 'Fired-stage node', body: 'Kiln-exit inspection of the finished tile. A multi-camera array runs the surface model trained on the plant\'s own designs; the laser profiler measures flatness and calibre to ISO 10545-2. Grade signal goes to the sorter.', items: ['Three-camera array with polarised light bars', '3D laser profiler for curvature, warpage, wedging, calibre', 'YOLO-family surface model on an edge GPU', 'Reject diverter for structural failures'] },
   { id: 'cloud', name: 'Cloud dashboard', target: [3.5, 9, -6], cam: [3.5, 12, 8], title: 'Cloud dashboard and root-cause engine', body: 'Every tile record lands here with time, position and measurements. Defect bursts are correlated with press, dryer and kiln telemetry; recommendations go to the operator first, and later over OPC-UA to the machines.', items: ['Live line view, OEE and grade split', 'Automatic shift and daily reports', 'Technician task allocation', 'R&D database of every tile ever made'] },
 ];
@@ -533,8 +532,8 @@ drawDash(); animate();
 const $ = (id) => document.getElementById(id);
 const fmt = (n) => { if (n >= 1e7) return (n / 1e7).toFixed(2) + ' crore'; if (n >= 1e5) return (n / 1e5).toFixed(1) + ' lakh'; return Math.round(n).toLocaleString('en-IN'); };
 function calc() {
-  const out = +$('c-out').value || 0, area = +$('c-area').value || 0.36, gas = +$('c-gas').value || 0, price = +$('c-price').value || 0, mat = +$('c-mat').value || 0, pct = (+$('c-pct').value || 0) / 100, days = +$('c-days').value || 0;
-  const m2 = out * pct, tilesDay = m2 / area, gasDay = tilesDay * gas, gasYr = gasDay * price * days, matYr = m2 * mat * days;
+  const tilesIn = +$('c-tiles').value || 0, area = +$('c-area').value || 0.36, gas = +$('c-gas').value || 0, price = +$('c-price').value || 0, mat = +$('c-mat').value || 0, days = +$('c-days').value || 0;
+  const tilesDay = tilesIn, m2 = tilesDay * area, gasDay = tilesDay * gas, gasYr = gasDay * price * days, matYr = m2 * mat * days;
   $('r-tiles').textContent = Math.round(tilesDay).toLocaleString('en-IN'); $('r-gasm3').textContent = Math.round(gasDay).toLocaleString('en-IN');
   $('r-gas').textContent = fmt(gasYr); $('r-mat').textContent = fmt(matYr); $('r-total').textContent = fmt(gasYr + matYr);
 }
