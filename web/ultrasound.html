@@ -1,0 +1,331 @@
+<title>Ultrasound Array Explainer</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  /* Layout: one column, 3D stage on top with a live map of what the sensors measured beneath it, then controls and a plain-language readout. */
+  :root {
+    --bg: #faf7f3; --bg-2: #f0e9e1; --fg: #221b17; --fg-2: #6b5f57; --line: #ddd2c7; --card: #ffffff;
+    --clay: #c8582a; --teal: #1d7484; --alert: #b42318; --moss: #4f7a38;
+    --scene-bg: #ece4da; --scene-floor: #d9cfc3;
+    --map-empty: #d4c9bd; --map-empty-2: #cdc1b4; --map-ok: #1d7484; --map-bad: #c8582a;
+    --display: "Fraunces", "Iowan Old Style", Georgia, serif;
+    --body: "Public Sans", "Segoe UI", system-ui, sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #17120f; --bg-2: #211a16; --fg: #f1e9e1; --fg-2: #b3a497; --line: #3a2f29; --card: #231c18;
+      --clay: #e8773f; --teal: #4fb3c4; --alert: #f08a7e; --moss: #8fbf6a;
+      --scene-bg: #1c1613; --scene-floor: #2a221d;
+      --map-empty: #2e2621; --map-empty-2: #352c26; --map-ok: #3d9db0; --map-bad: #e8773f; color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #17120f; --bg-2: #211a16; --fg: #f1e9e1; --fg-2: #b3a497; --line: #3a2f29; --card: #231c18;
+    --clay: #e8773f; --teal: #4fb3c4; --alert: #f08a7e; --moss: #8fbf6a;
+    --scene-bg: #1c1613; --scene-floor: #2a221d;
+    --map-empty: #2e2621; --map-empty-2: #352c26; --map-ok: #3d9db0; --map-bad: #e8773f; color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 16px; line-height: 1.55; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding-inline: max(16px, env(safe-area-inset-left, 0px)) max(16px, env(safe-area-inset-right, 0px)); padding-block: 2rem 3rem; display: grid; gap: 1.4rem; }
+  .eyebrow { font-family: var(--mono); font-size: .75rem; letter-spacing: .12em; text-transform: uppercase; color: var(--clay); }
+  h1 { font-family: var(--display); font-weight: 700; font-size: clamp(1.8rem, 4.4vw, 2.9rem); line-height: 1.1; margin: .3rem 0 .6rem; text-wrap: balance; }
+  h2 { font-family: var(--display); font-size: 1.25rem; margin: 0 0 .4rem; }
+  p { margin: 0 0 .7rem; max-width: 70ch; }
+  .muted { color: var(--fg-2); }
+  .stagewrap { background: var(--scene-bg); border-radius: 14px; overflow: hidden; position: relative; border: 1px solid var(--line); }
+  #stage { aspect-ratio: 16 / 8; max-width: 100%; }
+  @media (max-width: 720px) { #stage { aspect-ratio: 4 / 3.4; } }
+  #stage canvas { display: block; width: 100%; height: 100%; }
+  .views { position: absolute; top: 10px; left: 10px; display: flex; gap: .4rem; flex-wrap: wrap; }
+  .views button { font: 500 .8rem var(--body); color: var(--fg); background: var(--card); border: 1px solid var(--line); border-radius: 999px; padding: .3rem .7rem; cursor: pointer; }
+  .badge { position: absolute; right: 10px; bottom: 10px; font-family: var(--mono); font-size: .72rem; color: var(--fg-2); background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: .3rem .55rem; }
+  .row { display: grid; grid-template-columns: minmax(0, 340px) minmax(0, 1fr); gap: 1.2rem; align-items: start; }
+  @media (max-width: 820px) { .row { grid-template-columns: 1fr; } }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 1rem 1.1rem; min-width: 0; }
+  .mapbox { display: grid; gap: .5rem; justify-items: start; }
+  #map { width: 100%; max-width: 340px; aspect-ratio: 1; image-rendering: pixelated; border: 1px solid var(--line); border-radius: 6px; background: var(--map-empty); }
+  .maplabel { display: flex; justify-content: space-between; width: 100%; max-width: 340px; font-family: var(--mono); font-size: .72rem; color: var(--fg-2); }
+  .key { display: flex; flex-wrap: wrap; gap: .8rem; font-size: .82rem; color: var(--fg-2); }
+  .key span::before { content: ""; display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: .35rem; vertical-align: -1px; background: var(--sw); }
+  .controls { display: grid; gap: .8rem; }
+  fieldset { border: 0; padding: 0; margin: 0; display: flex; gap: .5rem; flex-wrap: wrap; }
+  .seg { position: relative; }
+  .seg input { position: absolute; opacity: 0; inset: 0; cursor: pointer; }
+  .seg label { display: block; font: 500 .88rem var(--body); padding: .45rem .9rem; border: 1px solid var(--line); border-radius: 999px; background: var(--bg-2); color: var(--fg); }
+  .seg input:checked + label { background: var(--clay); border-color: var(--clay); color: #fff; }
+  .seg input:focus-visible + label, button:focus-visible, input[type=range]:focus-visible, input[type=checkbox]:focus-visible { outline: 3px solid var(--teal); outline-offset: 2px; }
+  .ctl { display: grid; gap: .15rem; font-size: .88rem; color: var(--fg-2); }
+  .ctl b { color: var(--fg); font-family: var(--mono); font-weight: 500; }
+  input[type=range] { width: 100%; accent-color: var(--clay); }
+  .chk { display: flex; gap: .5rem; align-items: center; font-size: .9rem; }
+  .btn { font: 600 .9rem var(--body); color: #fff; background: var(--clay); border: 0; border-radius: 8px; padding: .55rem .9rem; cursor: pointer; justify-self: start; }
+  .verdict { font-weight: 600; padding: .6rem .8rem; border-radius: 8px; background: var(--bg-2); min-height: 3.2rem; }
+  .verdict.ok { color: var(--moss); } .verdict.bad { color: var(--alert); }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: .6rem; }
+  .stat { background: var(--bg-2); border-radius: 10px; padding: .6rem .7rem; }
+  .stat .v { font-family: var(--display); font-size: 1.4rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .stat .l { font-size: .75rem; color: var(--fg-2); }
+  .notes { font-size: .9rem; color: var(--fg-2); }
+  .notes li { margin-bottom: .3rem; }
+</style>
+
+<div class="wrap">
+  <header>
+    <span class="eyebrow">Design idea, not a tested product</span>
+    <h1>How a fixed ultrasound array could find a hidden lamination</h1>
+    <p class="muted">A green tile can look perfect on top and still hold a thin air gap inside. Sound sent up through the tile is blocked by that gap. Many fixed sender-and-receiver pairs across the belt let the moving tile scan itself. Drag the 3D view, change the number of pairs, and watch what each design can and cannot see.</p>
+  </header>
+
+  <div class="stagewrap">
+    <div id="stage"></div>
+    <div class="views" role="group" aria-label="Camera view">
+      <button type="button" data-view="persp">3D view</button>
+      <button type="button" data-view="side">Along the belt</button>
+      <button type="button" data-view="top">From above</button>
+    </div>
+    <div class="badge">simulation, slowed down, not measured data</div>
+  </div>
+
+  <div class="row">
+    <section class="card mapbox" aria-label="What the sensors measured">
+      <h2>What the sensors measured</h2>
+      <canvas id="map" width="60" height="60" role="img" aria-label="Map of measured sound strength across the tile"></canvas>
+      <div class="maplabel"><span>leading edge</span><span>trailing edge →</span></div>
+      <div class="key">
+        <span style="--sw:var(--map-ok)">sound passed</span>
+        <span style="--sw:var(--map-bad)">sound blocked</span>
+        <span style="--sw:var(--map-empty)">not measured</span>
+      </div>
+    </section>
+
+    <section class="card controls" aria-label="Controls">
+      <fieldset>
+        <div class="seg"><input type="radio" name="mode" id="m-array" value="array" checked><label for="m-array">Fixed array of pairs</label></div>
+        <div class="seg"><input type="radio" name="mode" id="m-single" value="single"><label for="m-single">One scanning pair</label></div>
+      </fieldset>
+      <label class="ctl" for="n">Number of pairs across the belt <b id="n-v">12</b>
+        <input id="n" type="range" min="3" max="32" step="1" value="12"></label>
+      <label class="ctl" for="lam">Hidden lamination length <b id="lam-v">100 mm</b>
+        <input id="lam" type="range" min="30" max="200" step="10" value="100"></label>
+      <label class="ctl" for="speed">Playback speed <b id="speed-v">3.0 units/s</b>
+        <input id="speed" type="range" min="1" max="8" step="0.5" value="3"></label>
+      <label class="chk" for="hid"><input id="hid" type="checkbox"> Show the hidden lamination inside the tile</label>
+      <label class="chk" for="tru"><input id="tru" type="checkbox"> Outline the true lamination on the map</label>
+      <button class="btn" id="newtile" type="button">New tile, new lamination position</button>
+    </section>
+  </div>
+
+  <section class="card">
+    <div class="verdict" id="verdict" aria-live="polite">Tile entering the sensors…</div>
+    <div class="stats" style="margin-top:.7rem">
+      <div class="stat"><div class="v" id="s-pitch">—</div><div class="l">gap between measuring lines</div></div>
+      <div class="stat"><div class="v" id="s-lam">—</div><div class="l">hidden lamination length</div></div>
+      <div class="stat"><div class="v" id="s-cells">—</div><div class="l">map cells measured, of 3,600</div></div>
+      <div class="stat"><div class="v" id="s-blk">—</div><div class="l">cells where sound was blocked</div></div>
+    </div>
+  </section>
+
+  <section class="card notes">
+    <h2>Reading the demo</h2>
+    <ul>
+      <li><b>Why a fixed array:</b> sound through air and ceramic is weak, so each point needs time to average the signal. A single pair has to sweep across a tile that is already moving past, so it draws only a few diagonal lines (switch to "One scanning pair" to see the gaps).</li>
+      <li><b>Spacing sets what you can see:</b> a lamination narrower than the gap between measuring lines can slide between them and be missed. More pairs means a smaller gap and a higher cost.</li>
+      <li><b>Design limits shown here:</b> the tile rests on two rails and the sensors sit between them, so about 40 mm at each edge is not measured and needs another check.</li>
+      <li><b>Not shown:</b> dust, belt vibration, neighbouring pairs hearing each other, and electronic noise. The sound levels in this demo are simulated, not recorded.</li>
+      <li><b>Evidence status:</b> air-coupled ultrasound has been used on green ceramic samples in laboratories and sold as a commercial scanner. We found no published example on a 600 mm green tile at line speed. This is a design to bench-test first.</li>
+    </ul>
+  </section>
+</div>
+
+<script type="importmap">
+{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/" } }
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const $ = (id) => document.getElementById(id);
+const css = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// ---------- state (1 unit = 100 mm; tile is 6 x 6 units = 600 x 600 mm)
+const S = { mode: 'array', n: 12, lamMM: 100, speed: reduced ? 1.5 : 3, showHidden: false, showTrue: false };
+const SPAN = 5.2, HALF = SPAN / 2, N_CELLS = 60;
+const tile = { x: -9, lamX: 0, lamZ: 0, lamW: 1, lamH: .7, last: -1, done: false, hold: 0 };
+let amp = new Float32Array(N_CELLS * N_CELLS).fill(NaN);
+let simT = 0, mapDirty = true;
+
+// ---------- scene
+const stage = $('stage');
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+stage.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(40, 2, 0.1, 200);
+camera.position.set(9, 6.5, 11);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.target.set(0, 0.3, 0); controls.enableDamping = true; controls.maxPolarAngle = Math.PI * 0.52; controls.minDistance = 4; controls.maxDistance = 40;
+scene.add(new THREE.HemisphereLight(0xffffff, 0x8a7a6a, 1.0));
+const sun = new THREE.DirectionalLight(0xfff2e0, 1.2); sun.position.set(-6, 14, 8); scene.add(sun);
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(80, 40), new THREE.MeshStandardMaterial({ color: 0xd9cfc3, roughness: 1 }));
+floor.rotation.x = -Math.PI / 2; floor.position.y = -1.6; scene.add(floor);
+function theme() { scene.background = new THREE.Color(css('--scene-bg')); floor.material.color.set(css('--scene-floor')); mapDirty = true; }
+theme();
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', theme);
+new MutationObserver(theme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+const mat = (c, o = {}) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: .6 }, o));
+const M = { steel: mat(0x8f949a, { metalness: .5 }), dark: mat(0x3a3a3c), rail: mat(0x5a6470), tile: mat(0xd9c4a3, { roughness: 1 }), lam: mat(0xb42318, { emissive: 0x6a0f0f, emissiveIntensity: .5 }), tx: mat(0x1d7484), rx: mat(0xc8582a) };
+const box = (w, h, d, m, x, y, z, parent = scene) => { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); o.position.set(x, y, z); parent.add(o); return o; };
+
+// belt: two edge rails the tile rests on; sensors sit between them
+[-1, 1].forEach(s => box(26, .18, .6, M.rail, 0, .02, s * 3.05));
+// gantry: lower beam for transmitters, upper beam for receivers
+[-1, 1].forEach(s => { box(.25, 3.2, .25, M.steel, 0, .1, s * 3.9); });
+box(.3, .15, 7.9, M.steel, 0, -1.0, 0);
+box(.3, .15, 7.9, M.steel, 0, 1.55, 0);
+
+// tile
+const tileG = new THREE.Group(); scene.add(tileG);
+const body = new THREE.Mesh(new THREE.BoxGeometry(6, .12, 6), new THREE.MeshStandardMaterial({ color: 0xd9c4a3, roughness: 1, transparent: true, opacity: 1 }));
+tileG.add(body);
+const lamMesh = new THREE.Mesh(new THREE.BoxGeometry(1, .03, 1), M.lam); lamMesh.visible = false; tileG.add(lamMesh);
+tileG.position.y = .22;
+
+// sensors
+const sensors = new THREE.Group(); scene.add(sensors);
+let beams = [];
+function sensorZ(i) { return S.mode === 'single' ? 0 : (S.n === 1 ? 0 : -HALF + SPAN * i / (S.n - 1)); }
+function build() {
+  sensors.clear(); beams = [];
+  const count = S.mode === 'single' ? 1 : S.n;
+  for (let i = 0; i < count; i++) {
+    const z = sensorZ(i);
+    const tx = new THREE.Mesh(new THREE.CylinderGeometry(.13, .13, .22, 16), M.tx); tx.position.set(0, -.8, z);
+    const rx = new THREE.Mesh(new THREE.CylinderGeometry(.13, .13, .22, 16), M.rx); rx.position.set(0, 1.35, z);
+    const bm = new THREE.Mesh(new THREE.CylinderGeometry(.045, .045, 2.0, 8), new THREE.MeshBasicMaterial({ color: 0x1d7484, transparent: true, opacity: .55 }));
+    bm.position.set(0, .28, z);
+    sensors.add(tx, rx, bm); beams.push({ bm, tx, rx });
+  }
+  $('n-v').textContent = S.n; updateStats();
+}
+// labels
+function label(text, x, y, z, s = 1) {
+  const c = document.createElement('canvas'); c.width = 512; c.height = 96; const g = c.getContext('2d');
+  g.fillStyle = 'rgba(34,27,23,.86)'; g.beginPath(); g.roundRect(6, 10, 500, 76, 14); g.fill();
+  g.fillStyle = '#fff'; g.font = '600 38px "Public Sans", system-ui, sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(text, 256, 48);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace;
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, depthTest: false })); sp.scale.set(3.4 * s, .64 * s, 1); sp.position.set(x, y, z); scene.add(sp);
+}
+label('receivers (above)', 0, 2.3, -4.4); label('transmitters (below)', 0, -1.9, -4.4); label('tile rests on two rails', 5.2, .9, 3.2, .9); label('moves →', -6, .9, 0, .8);
+
+// ---------- physics of the demo
+function inLam(lx, lz) { const a = tile.lamW / 2, b = tile.lamH / 2; return ((lx - tile.lamX) / a) ** 2 + ((lz - tile.lamZ) / b) ** 2 < 1; }
+function level(lx, lz) { return (inLam(lx, lz) ? .12 + Math.random() * .08 : .82 + Math.random() * .14); }
+function pairZ(i) { // current z of pair i
+  if (S.mode === 'array') return sensorZ(i);
+  const zs = 1.73 * S.speed; const ph = ((simT * zs) / SPAN) % 2; return ph < 1 ? -HALF + SPAN * ph : HALF - SPAN * (ph - 1);
+}
+function setCell(c, z, a) {
+  const r0 = Math.round((z + 3) / 6 * (N_CELLS - 1));
+  for (let r = r0; r <= Math.min(N_CELLS - 1, r0 + 1); r++) amp[r * N_CELLS + c] = a;
+}
+function sampleColumn(c) {
+  const lx = 3 - (c + .5) / N_CELLS * 6;
+  const count = S.mode === 'single' ? 1 : S.n;
+  for (let i = 0; i < count; i++) { const z = pairZ(i); setCell(c, z, level(lx, z)); }
+  mapDirty = true;
+}
+function newTile() {
+  tile.lamW = S.lamMM / 100; tile.lamH = tile.lamW * .7;
+  tile.lamX = (Math.random() * 2 - 1) * (3 - tile.lamW / 2 - .4); tile.lamZ = (Math.random() * 2 - 1) * (2.6 - tile.lamH / 2);
+  lamMesh.scale.set(tile.lamW, 1, tile.lamH); lamMesh.position.set(tile.lamX, 0, tile.lamZ);
+  tile.x = -9; tile.last = -1; tile.done = false; tile.hold = 0; amp.fill(NaN); mapDirty = true;
+  $('verdict').className = 'verdict'; $('verdict').textContent = 'Tile entering the sensors…'; updateStats();
+}
+function counts() { let m = 0, b = 0; for (let i = 0; i < amp.length; i++) { if (!Number.isNaN(amp[i])) { m++; if (amp[i] < .5) b++; } } return [m, b]; }
+function updateStats() {
+  const [m, b] = counts();
+  $('s-pitch').textContent = S.mode === 'single' ? 'sweeping' : (SPAN * 100 / (S.n - 1)).toFixed(0) + ' mm';
+  $('s-lam').textContent = S.lamMM + ' mm';
+  $('s-cells').textContent = m.toLocaleString('en-US'); $('s-blk').textContent = b;
+}
+function verdict() {
+  const [, b] = counts(); const v = $('verdict');
+  if (b >= 2) { v.className = 'verdict ok'; v.textContent = `Lamination found. Sound was blocked in ${b} map cells, so this tile would be flagged.`; }
+  else { v.className = 'verdict bad'; v.textContent = S.mode === 'single'
+    ? 'Missed. The single pair drew only a few diagonal lines and the lamination fell between them.'
+    : 'Missed. The lamination fell between measuring lines. More pairs, a smaller gap, would be needed.'; }
+}
+
+// ---------- map drawing
+const mctx = $('map').getContext('2d'); const img = mctx.createImageData(N_CELLS, N_CELLS);
+function hex(h) { const v = parseInt(h.replace('#', '').padEnd(6, '0'), 16); return [(v >> 16) & 255, (v >> 8) & 255, v & 255]; }
+function drawMap() {
+  const e1 = hex(css('--map-empty')), e2 = hex(css('--map-empty-2')), ok = hex(css('--map-ok')), bad = hex(css('--map-bad'));
+  for (let r = 0; r < N_CELLS; r++) for (let c = 0; c < N_CELLS; c++) {
+    const a = amp[r * N_CELLS + c], i = (r * N_CELLS + c) * 4; let col;
+    if (Number.isNaN(a)) col = ((r + c) & 1) ? e1 : e2; else col = a < .5 ? bad : ok;
+    img.data[i] = col[0]; img.data[i + 1] = col[1]; img.data[i + 2] = col[2]; img.data[i + 3] = 255;
+  }
+  mctx.putImageData(img, 0, 0);
+  if (S.showTrue) { // outline of the true lamination
+    mctx.strokeStyle = css('--fg'); mctx.lineWidth = 1; mctx.setLineDash([2, 2]); mctx.beginPath();
+    mctx.ellipse((3 - tile.lamX) / 6 * N_CELLS, (tile.lamZ + 3) / 6 * N_CELLS, tile.lamW / 2 / 6 * N_CELLS, tile.lamH / 2 / 6 * N_CELLS, 0, 0, Math.PI * 2); mctx.stroke(); mctx.setLineDash([]);
+  }
+  mapDirty = false;
+}
+
+// ---------- views
+let flight = null;
+const VIEWS = { persp: [[9, 6.5, 11], [0, .3, 0]], side: [[0, 1.2, 15], [0, .3, 0]], top: [[0, 15, .01], [0, 0, 0]] };
+document.querySelectorAll('.views button').forEach(b => b.addEventListener('click', () => {
+  const v = VIEWS[b.dataset.view]; flight = { t: 0, p0: camera.position.clone(), p1: new THREE.Vector3(...v[0]), t0: controls.target.clone(), t1: new THREE.Vector3(...v[1]) };
+}));
+
+// ---------- controls
+document.querySelectorAll('input[name=mode]').forEach(r => r.addEventListener('change', () => { S.mode = r.value; build(); newTile(); }));
+$('n').addEventListener('input', e => { S.n = +e.target.value; build(); newTile(); });
+$('lam').addEventListener('input', e => { S.lamMM = +e.target.value; $('lam-v').textContent = S.lamMM + ' mm'; newTile(); });
+$('speed').addEventListener('input', e => { S.speed = +e.target.value; $('speed-v').textContent = S.speed.toFixed(1) + ' units/s'; });
+$('hid').addEventListener('change', e => { S.showHidden = e.target.checked; });
+$('tru').addEventListener('change', e => { S.showTrue = e.target.checked; mapDirty = true; });
+$('newtile').addEventListener('click', newTile);
+
+function resize() { const w = stage.clientWidth, h = stage.clientHeight; renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix(); }
+new ResizeObserver(resize).observe(stage); resize();
+
+// ---------- loop
+const clock = new THREE.Clock(); let statT = 0;
+function frame() {
+  requestAnimationFrame(frame);
+  const dt = Math.min(clock.getDelta(), .05); simT += dt;
+  if (!tile.done) {
+    tile.x += S.speed * dt;
+    const lx = -tile.x;
+    if (lx <= 3 && lx >= -3) {
+      const c = Math.min(N_CELLS - 1, Math.max(0, Math.floor((3 - lx) / 6 * N_CELLS)));
+      for (let k = tile.last + 1; k <= c; k++) sampleColumn(k);
+      tile.last = Math.max(tile.last, c);
+    }
+    if (tile.x > 3.5 && tile.last >= N_CELLS - 1) { tile.done = true; verdict(); updateStats(); }
+  } else { tile.hold += dt; tile.x += S.speed * dt; if (tile.hold > 2.2 || tile.x > 9) newTile(); }
+  tileG.position.x = tile.x;
+  body.material.opacity = S.showHidden ? .38 : 1; lamMesh.visible = S.showHidden;
+  // beams: colour by what the sound meets right now
+  const lx = -tile.x, over = lx <= 3 && lx >= -3;
+  beams.forEach((b, i) => {
+    const z = pairZ(i); b.tx.position.z = z; b.rx.position.z = z; b.bm.position.z = z;
+    const blocked = over && inLam(lx, z);
+    b.bm.material.color.set(blocked ? 0xc8582a : 0x1d7484); b.bm.material.opacity = over ? (blocked ? .9 : .6) : .18;
+  });
+  if (mapDirty) drawMap();
+  statT += dt; if (statT > .2) { statT = 0; updateStats(); }
+  if (flight) { flight.t = Math.min(1, flight.t + dt / .9); const e = 1 - Math.pow(1 - flight.t, 3); camera.position.lerpVectors(flight.p0, flight.p1, e); controls.target.lerpVectors(flight.t0, flight.t1, e); if (flight.t >= 1) flight = null; }
+  controls.update(); renderer.render(scene, camera);
+}
+build(); newTile(); frame();
+</script>
